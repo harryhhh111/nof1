@@ -135,6 +135,24 @@ python main.py --status
 
 显示数据库记录数、监控状态等信息。
 
+### 示例 5：数据库查看（新增）
+```bash
+# 快速查看数据库摘要
+python3 quick_query.py summary
+
+# 查看技术指标
+python3 quick_query.py indicators
+
+# 查看 K 线数据
+python3 quick_query.py klines
+
+# 交互式数据库浏览器
+python3 view_database.py
+
+# 数据库演示工具
+python3 demo_database.py
+```
+
 ## 🔧 配置自定义
 
 编辑 `config.py` 文件：
@@ -262,8 +280,13 @@ pytest tests/ -v
 - `README.md` - 完整项目文档
 - `CLAUDE.md` - AI 开发指南
 - `QUICKSTART.md` - 详细快速入门
+- `INSTALL.md` - 安装说明（本文件）
 - `PROJECT_SUMMARY.md` - 项目实现总结
+- `DATABASE_GUIDE.md` - 完整数据库指南
 - `demo.py` - 交互式演示
+- `quick_query.py` - 快速数据库查询工具
+- `view_database.py` - 交互式数据库浏览器
+- `demo_database.py` - 数据库演示工具
 
 ## 🎯 下一步
 
