@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(curl -I https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api)",
+      "Bash(curl -s https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
