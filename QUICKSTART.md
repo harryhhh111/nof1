@@ -18,15 +18,23 @@
 - `scheduler.py` - 定时任务调度器
 - `config.py` - 系统配置
 
-### 3. 测试与文档
+### 3. 数据库查看工具（新增）
+- ✅ `quick_query.py` - 快速数据库查询工具
+- ✅ `view_database.py` - 交互式数据库浏览器
+- ✅ `demo_database.py` - 数据库演示工具
+- ✅ `DATABASE_GUIDE.md` - 完整数据库指南
+
+### 4. 测试与文档
 - ✅ 完整的单元测试套件（tests/ 目录）
 - ✅ 集成测试
 - ✅ 基础功能测试脚本（test_basic.py）
 - ✅ 系统演示脚本（demo.py）
 - ✅ CLAUDE.md - AI 辅助开发指南
 - ✅ QUICKSTART.md - 本文档
+- ✅ INSTALL.md - 安装说明
+- ✅ PROJECT_SUMMARY.md - 项目总结
 
-### 4. 已修复的问题
+### 5. 已修复的问题
 - ✅ 修复数据库指标插入逻辑错误
 - ✅ 移除对 pandas-ta 的依赖，改用纯 pandas 实现
 - ✅ 优化技术指标计算算法
@@ -95,6 +103,24 @@ python main.py --status
 ```bash
 # 查询数据库中的最新数据
 python main.py --query --symbols BTCUSDT
+```
+
+### 第七步：查看数据库（新增）
+```bash
+# 快速查看数据库摘要
+python3 quick_query.py summary
+
+# 查看技术指标
+python3 quick_query.py indicators
+
+# 查看 K 线数据
+python3 quick_query.py klines
+
+# 交互式数据库浏览器
+python3 view_database.py
+
+# 数据库演示和示例
+python3 demo_database.py
 ```
 
 ## 📊 使用场景示例
@@ -167,6 +193,62 @@ python main.py --status
   4小时 K 线: 850 条
   技术指标: 2,100 条
   永续合约数据: 1,200 条
+```
+
+### 场景 4：数据库查看（新增）
+
+系统提供多种查看数据库的方式：
+
+**方式 1：快速查询工具**
+```bash
+# 查看数据库摘要
+python3 quick_query.py summary
+
+# 查看技术指标
+python3 quick_query.py indicators
+
+# 查看 K 线数据
+python3 quick_query.py klines
+
+# 查看永续合约数据
+python3 quick_query.py perp
+```
+
+**方式 2：交互式查看器**
+```bash
+# 启动交互式数据库浏览器
+python3 view_database.py
+
+# 选择操作：
+#   1. 查看数据库概览
+#   2. 自定义 SQL 查询
+#   3. 退出
+```
+
+**方式 3：数据库演示工具**
+```bash
+# 启动演示工具，包含示例数据
+python3 demo_database.py
+
+# 选择操作：
+#   1. 创建示例数据
+#   2. 查看数据库摘要
+#   3. 常用查询示例
+#   4. 查看表结构
+#   5. 退出
+```
+
+**输出示例（quick_query.py indicators）：**
+```
+======================================================================
+📊 技术指标 (最新)
+======================================================================
+交易对          周期     EMA20        EMA50        RSI14    ATR14
+----------------------------------------------------------------------
+BTCUSDT      3m         49992.89     49977.24    53.44       145.36
+ETHUSDT      3m          3006.60      3018.54    44.54       151.85
+BTCUSDT      4h         50209.51     50063.61    49.92       718.51
+ETHUSDT      4h          3242.76      2963.92    48.03       653.59
 ```
 
 ## 🧪 运行测试
