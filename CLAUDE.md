@@ -4,16 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a **Python 3 cryptocurrency market data acquisition and analysis system** (Nof1 数据获取系统), inspired by Nof1 Alpha Arena. It fetches, stores, and analyzes cryptocurrency market data with automated scheduling.
+This is a **comprehensive LLM-powered cryptocurrency trading system** that combines market data analysis with AI-driven decision making. The system implements a multi-phase architecture with parallel LLM processing (DeepSeek + Qwen3), risk management, backtesting, and real-time performance monitoring.
 
 **Key Features:**
-- Multi-exchange data fetching (currently Binance via CCXT)
-- Real-time market data acquisition (OHLCV K-line data)
-- Technical indicator calculations (EMA, MACD, RSI, ATR, Volume)
-- Perpetual futures data (funding rates, open interest)
-- SQLite database persistence with comprehensive viewing tools
-- Automated scheduled data updates (default: every 3 minutes)
-- Complete test suite and documentation
+- **Multi-timeframe data analysis** (4h trend + 3m timing)
+- **Parallel LLM decision making** (DeepSeek + Qwen3)
+- **Intelligent decision caching** to reduce API costs
+- **Paper trading simulation** with full P&L tracking
+- **Risk assessment and position sizing**
+- **Historical backtesting engine**
+- **Real-time performance monitoring**
+- **Automated 5-minute decision cycles**
+- **Complete test suite and documentation**
 
 ## Common Commands
 
