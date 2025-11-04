@@ -51,6 +51,52 @@ TABLES = {
 BINANCE_API_KEY = os.getenv("BINANCE_API_KEY", "")
 BINANCE_SECRET_KEY = os.getenv("BINANCE_SECRET_KEY", "")
 
+# ===== Binance Testnet 配置 =====
+# 设置为 True 使用 Testnet，False 使用真实交易所
+USE_TESTNET = os.getenv("USE_TESTNET", "true").lower() == "true"
+
+# Testnet API Key（从 testnet.binance.vision 获取）
+TESTNET_API_KEY = os.getenv("TESTNET_API_KEY", "")
+TESTNET_SECRET_KEY = os.getenv("TESTNET_SECRET_KEY", "")
+
+# 根据模式选择配置
+if USE_TESTNET:
+    BINANCE_API_KEY = TESTNET_API_KEY or BINANCE_API_KEY
+    BINANCE_SECRET_KEY = TESTNET_SECRET_KEY or BINANCE_SECRET_KEY
+    BINANCE_BASE_URL = "https://testnet.binance.vision"
+else:
+    BINANCE_BASE_URL = "https://api.binance.com"
+
+# 交易所配置
+EXCHANGE_CONFIG = {
+    'apiKey': BINANCE_API_KEY,
+    'secret': BINANCE_SECRET_KEY,
+    'sandbox': USE_TESTNET,  # 关键：启用/禁用沙盒模式
+    'enableRateLimit': True,
+    'baseUrl': BINANCE_BASE_URL if USE_TESTNET else None,
+}
+
+# 交易模式
+TRADING_MODE = {
+    'PAPER': 'paper',    # 纸交易
+    'TESTNET': 'testnet',  # Testnet模拟交易
+    'LIVE': 'live'       # 实盘交易（高风险！）
+}
+
+# 当前交易模式（根据USE_TESTNET自动选择）
+CURRENT_MODE = TRADING_MODE['TESTNET'] if USE_TESTNET else TRADING_MODE['PAPER']
+
+print(f"""
+═══════════════════════════════════════════════════════
+  Trading Mode: {CURRENT_MODE.upper()}
+  {'=' * 53}
+  {'⚠️  WARNING: This is TESTNET mode - No real money!' if USE_TESTNET else '💰 Paper Trading Mode - Virtual money only'}
+  {'=' * 53}
+  Testnet API Key: {'✅ Configured' if TESTNET_API_KEY else '❌ NOT SET'}
+  {'=' * 53}
+═══════════════════════════════════════════════════════
+""")
+
 # 日志配置
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

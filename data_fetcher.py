@@ -26,12 +26,16 @@ class DataFetcher:
         Args:
             db_path: 数据库路径
         """
-        self.exchange = ccxt.binance({
-            'sandbox': False,
-            'enableRateLimit': True,
-        })
+        # 使用配置文件中的交易所配置
+        import config
+        self.exchange = ccxt.binance(config.EXCHANGE_CONFIG)
         self.db = Database(db_path) if db_path else Database()
         self.ti = TechnicalIndicators()
+        self.use_testnet = config.USE_TESTNET
+
+        # 记录当前模式
+        mode = "Testnet" if self.use_testnet else "Real"
+        logger.info(f"数据获取器已初始化 - 模式: {mode}")
 
     def get_klines(self, symbol: str, timeframe: str = '3m', limit: int = 100) -> List:
         """
