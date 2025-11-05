@@ -39,7 +39,7 @@ def run_system(hours):
     print("\n📖 查看方式:")
     print("  • 日志: tail -f run_full_system.log")
     print("  • 决策: python3 nof1.py --view")
-    print("  • Web: https://testnet.binance.vision/")
+    print("  • Web: https://demo.binance.com/")
     print("  • HTML: 打开 trading_dashboard.html")
 
     print("\n" + "=" * 80)
@@ -86,9 +86,9 @@ def view_results():
     except:
         print("⚠️  暂无决策记录")
 
-    # 2. Testnet状态
-    print("\n💰 Testnet余额:")
-    os.system(f"{sys.executable} testnet_viewer.py 2>/dev/null || echo '  请先运行系统生成记录'")
+    # 2. Demo Trading状态
+    print("\n💰 Demo Trading余额:")
+    os.system(f"{sys.executable} demo_trading_viewer.py 2>/dev/null || echo '  请先运行系统生成记录'")
 
 
 def test_integration():

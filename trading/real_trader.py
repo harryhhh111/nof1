@@ -375,10 +375,34 @@ class RealTrader:
             持仓列表
         """
         try:
-            positions = self.exchange.fetch_positions()
-            # 过滤非零持仓
-            open_positions = [p for p in positions if abs(float(p['contracts'])) > 0]
-            return open_positions
+            # 注意: Demo Trading 期货持仓查询可能不可用
+            # 使用现货余额作为持仓信息
+            if self.use_futures:
+                # 期货模式：尝试获取持仓，如果失败则返回空
+                try:
+                    positions = self.exchange.fetch_positions()
+                    # 过滤非零持仓
+                    open_positions = [p for p in positions if abs(float(p['contracts'])) > 0]
+                    return open_positions
+                except Exception as e:
+                    logger.warning(f"期货持仓查询不可用: {e}")
+                    logger.info("   (Demo Trading 可能不支持期货持仓查询)")
+                    return []
+            else:
+                # 现货模式：获取现货余额
+                balance = self.get_account_balance()
+                positions = []
+                for asset, amount in balance.items():
+                    if asset not in ['USDT', 'USDC', 'BUSD'] and amount > 0:
+                        positions.append({
+                            'symbol': asset + 'USDT',
+                            'contracts': amount,
+                            'side': 'long',
+                            'entryPrice': 0,
+                            'margin': 0,
+                            'percentage': 0
+                        })
+                return positions
         except Exception as e:
             logger.error(f"获取持仓失败: {e}")
             return []

@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from data_fetcher import DataFetcher
 from database import Database
-from trading.real_trader import RealTrader  # ✅ 使用Binance Testnet真实交易
+from trading.real_trader import RealTrader  # ✅ 使用Binance Demo Trading
 from monitoring.performance_monitor import PerformanceMonitor
 from models.trading_decision import TradingDecision
 from scheduling.high_freq_scheduler import HighFreqScheduler
@@ -47,13 +47,13 @@ class FullSystem:
         """初始化系统"""
         self.symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT']
         self.data_fetcher = None
-        self.real_trader = None  # ✅ 使用Binance Testnet
+        self.real_trader = None  # ✅ 使用Binance Demo Trading
         self.monitor = None
         self.db = None
         self.running = False
 
         logger.info("=" * 80)
-        logger.info("🚀 Nof1 完整交易系统启动（使用Binance Testnet）")
+        logger.info("🚀 Nof1 完整交易系统启动（使用Binance Demo Trading）")
         logger.info("=" * 80)
 
     async def initialize(self):
@@ -69,10 +69,10 @@ class FullSystem:
             self.data_fetcher = DataFetcher()
             logger.info("✅ 数据获取器初始化完成")
 
-            # 3. 初始化真实交易执行器（Binance Testnet）
-            logger.info("💰 初始化Binance Testnet交易执行器...")
+            # 3. 初始化真实交易执行器（Binance Demo Trading）
+            logger.info("💰 初始化Binance Demo Trading交易执行器...")
             self.real_trader = RealTrader()
-            logger.info("✅ Testnet交易执行器初始化完成")
+            logger.info("✅ Demo Trading交易执行器初始化完成")
 
             # 4. 初始化性能监控器
             logger.info("📊 初始化性能监控器...")
@@ -271,7 +271,7 @@ class FullSystem:
             logger.info("🌐 查看结果:")
             logger.info("   HTML面板: trading_dashboard.html")
             logger.info("   API服务器: python3 run_api.py")
-            logger.info("   Testnet查看: https://testnet.binance.vision/")
+            logger.info("   Demo Trading: https://demo.binance.com/")
             logger.info("=" * 80)
 
         except Exception as e:
