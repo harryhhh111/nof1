@@ -7,6 +7,22 @@ Nof1 数据获取系统配置文件
 import os
 from typing import Dict, List
 
+# 加载.env文件（如果存在）
+try:
+    from dotenv import load_dotenv
+    # 尝试从项目根目录和上级目录加载.env
+    if os.path.exists('.env'):
+        load_dotenv('.env')
+        print("✅ 已加载.env配置文件")
+    elif os.path.exists('/home/claude_user/nof1/.env'):
+        load_dotenv('/home/claude_user/nof1/.env')
+        print("✅ 已加载.env配置文件")
+except ImportError:
+    print("⚠️  python-dotenv未安装，使用系统环境变量")
+    # 用户可以使用: pip install python-dotenv
+except Exception as e:
+    print(f"⚠️  加载.env文件失败: {e}")
+
 # 数据更新间隔（秒）
 UPDATE_INTERVAL = 180  # 3分钟
 

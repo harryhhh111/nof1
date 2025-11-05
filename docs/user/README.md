@@ -1,10 +1,10 @@
-# Nof1 数据获取系统
+# Nof1 数据获取与交易系统
 
-基于 Nof1 Alpha Arena 的数据获取系统，实现加密货币市场数据的获取、存储和分析功能。
+基于 Nof1 Alpha Arena 的数据获取系统，实现加密货币市场数据的获取、存储、分析和真实交易功能。
 
 ## 项目概述
 
-本系统实现了类似 Nof1 Alpha Arena 的数据获取功能，支持：
+本系统实现了类似 Nof1 Alpha Arena 的数据获取和交易功能，支持：
 
 - 多交易所数据获取（目前支持 Binance）
 - 实时市场数据获取
@@ -12,6 +12,9 @@
 - 永续合约数据（资金费率、开放利息）
 - 数据持久化存储
 - 定时数据更新
+- **Binance Testnet 真实模拟交易**
+- **纸交易和真实交易模式切换**
+- **智能订单管理（市价单、限价单、止损止盈）**
 
 ## 系统架构
 
@@ -31,6 +34,19 @@
     ┌──────────────────┐
     │   database.py    │
     └──────────────────┘
+         │
+         ▼
+┌─────────────────────────────────┐
+│       Trading Modules           │
+│  ┌───────────────────────────┐  │
+│  │  Paper Trader (纸交易)     │  │
+│  └───────────────────────────┘  │
+│  ┌───────────────────────────┐  │
+│  │  Real Trader (真实交易)    │  │
+│  │  - Testnet 模拟交易        │  │
+│  │  - Live 实盘交易          │  │
+│  └───────────────────────────┘  │
+└─────────────────────────────────┘
 ```
 
 ## 数据结构
@@ -141,6 +157,115 @@ python main.py --query --symbols BTCUSDT
 ```bash
 python main.py --status
 ```
+
+### Binance Testnet 真实交易（新增）
+
+#### 配置 Testnet API
+
+**方法 1: .env 文件（推荐）**
+
+创建 `.env` 文件：
+```bash
+TESTNET_API_KEY=your_testnet_api_key
+TESTNET_SECRET_KEY=your_testnet_secret_key
+USE_TESTNET=true
+```
+
+**方法 2: 环境变量**
+```bash
+export TESTNET_API_KEY="your_api_key"
+export TESTNET_SECRET_KEY="your_secret_key"
+export USE_TESTNET="true"
+```
+
+#### 运行 Testnet 测试
+
+```bash
+# 验证 Testnet 连接
+python3 testnet_demo.py
+
+# 查看持仓和交易
+python3 testnet_viewer.py
+```
+
+#### 真实交易示例
+
+**Python 代码示例:**
+```python
+from trading.real_trader import RealTrader
+from models.trading_decision import TradingDecision
+
+# 初始化交易器
+trader = RealTrader()
+
+# 查看账户余额
+balance = trader.get_account_balance()
+print(f"USDT余额: {balance.get('USDT', 0)}")
+
+# 获取当前价格
+btc_price = trader.get_symbol_price('BTCUSDT')
+print(f"BTC价格: ${btc_price:,.2f}")
+
+# 市价买入
+result = trader.place_market_order(
+    symbol='BTCUSDT',
+    side='buy',
+    amount=0.001,  # 0.001 BTC
+    reason="Testnet测试交易"
+)
+
+# 限价买入
+result = trader.place_limit_order(
+    symbol='BTCUSDT',
+    side='buy',
+    amount=0.001,
+    price=95000.0,  # $95,000
+    reason="限价买入测试"
+)
+
+# 设置止损
+result = trader.set_stop_loss(
+    symbol='BTCUSDT',
+    side='long',
+    amount=0.001,
+    stop_price=94000.0,
+    reason="止损保护"
+)
+
+# 查看交易记录
+trades = trader.get_trades(100)
+for trade in trades[-10:]:
+    print(f"{trade['side']} {trade['amount']} {trade['symbol']} @ ${trade['price']}")
+
+trader.close()
+```
+
+#### 交易模式切换
+
+在 `config.py` 中：
+```python
+# 纸交易模式（虚拟资金，完全安全）
+USE_TESTNET = False
+CURRENT_MODE = 'paper'
+
+# Testnet 模式（真实API，虚拟资金）
+USE_TESTNET = True
+CURRENT_MODE = 'testnet'
+
+# 实盘模式（真实API，真实资金 - 高风险！）
+USE_TESTNET = False
+BINANCE_API_KEY = "real_api_key"
+CURRENT_MODE = 'live'
+```
+
+#### Web 界面查看（推荐）
+
+访问：https://testnet.binance.vision/
+
+- **Portfolio**: 查看余额和价值
+- **Orders**: 查看挂单
+- **Trade History**: 查看历史交易
+- **Fills**: 查看成交记录
 
 ## API 参考
 
@@ -323,13 +448,64 @@ tail -f nof1.log
 tail -100 nof1.log
 ```
 
+## 交易模式说明
+
+### 1. 纸交易模式（Paper Trading）
+- **资金**: 虚拟100,000 USDT
+- **特点**: 完全模拟，无风险
+- **使用**: `python -c "from trading.paper_trader import PaperTrader; ..."`
+
+### 2. Testnet 模拟交易（推荐测试）
+- **资金**: Binance 提供的虚拟资金
+- **API**: 使用真实 Binance API（testnet.binance.vision）
+- **特点**: 接近真实交易环境，但无资金风险
+- **使用**: 需要申请 Testnet API Key
+- **Web**: https://testnet.binance.vision/
+
+### 3. 实盘交易（高风险！）
+- **资金**: 真实资金
+- **API**: 生产环境 Binance API
+- **特点**: 真实交易，有盈亏
+- **注意**: 务必先在 Testnet 充分测试！
+
+## 交易功能详解
+
+### 支持的订单类型
+1. **市价单（Market Order）**
+   - 立即以市场价成交
+   - 适合快速入场/出场
+
+2. **限价单（Limit Order）**
+   - 指定价格成交
+   - 适合精确入场点位
+
+3. **止损单（Stop Order）**
+   - 触发后以市价或限价成交
+   - 用于风险控制
+
+### 自动风险管理
+- **止损（Stop Loss）**: 自动限制最大损失
+- **止盈（Take Profit）**: 自动锁定利润
+- **仓位管理**: 基于百分比计算仓位大小
+- **风险评估**: 自动评估交易风险等级
+
+### 交易记录与追踪
+- **SQLite 数据库**: 自动保存所有交易记录
+- **实时PnL**: 实时计算未实现和已实现损益
+- **性能指标**: 胜率、总收益率、最大回撤等
+- **历史回测**: 支持基于历史数据的策略回测
+
 ## 未来计划
 
+- [x] ✅ 完成 Binance Testnet 集成
+- [x] ✅ 实现真实交易执行器
+- [x] ✅ 支持多种订单类型
 - [ ] 支持更多交易所（Hyperliquid, OKX, Bybit）
 - [ ] 添加更多技术指标
 - [ ] 实现 WebSocket 实时数据推送
 - [ ] 添加数据可视化
-- [ ] 实现自动交易功能
+- [ ] 实现 LLM 驱动的自动交易
+- [ ] 开发 Web 管理界面
 
 ## 参考资料
 

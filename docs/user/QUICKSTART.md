@@ -1,4 +1,4 @@
-# Nof1 数据获取系统 - 快速启动指南
+# Nof1 数据获取与交易系统 - 快速启动指南
 
 ## ✅ 已完成的工作
 
@@ -9,6 +9,9 @@
 - ✅ SQLite 数据库存储
 - ✅ 定时调度器
 - ✅ 命令行接口
+- ✅ **Binance Testnet 真实交易集成**
+- ✅ **纸交易和真实交易模式切换**
+- ✅ **智能订单管理（市价单、限价单、止损止盈）**
 
 ### 2. 核心文件
 - `main.py` - 主程序入口，支持多种操作模式
@@ -122,6 +125,88 @@ python3 view_database.py
 # 数据库演示和示例
 python3 demo_database.py
 ```
+
+### 第八步：Binance Testnet 真实交易（新增）
+
+#### 8.1 获取 Testnet API Key
+
+1. 访问：https://testnet.binance.vision/
+2. 使用 GitHub 账号登录
+3. 复制显示的 API Key 和 Secret Key
+
+#### 8.2 配置环境
+
+**创建 `.env` 文件（推荐）：**
+```bash
+TESTNET_API_KEY=your_testnet_api_key_here
+TESTNET_SECRET_KEY=your_testnet_secret_key_here
+USE_TESTNET=true
+```
+
+**或设置环境变量：**
+```bash
+export TESTNET_API_KEY="your_api_key"
+export TESTNET_SECRET_KEY="your_secret_key"
+export USE_TESTNET="true"
+```
+
+#### 8.3 验证 Testnet 连接
+
+```bash
+# 运行完整测试
+python3 testnet_demo.py
+
+# 查看持仓和交易
+python3 testnet_viewer.py
+```
+
+#### 8.4 执行真实交易
+
+**Python 代码示例：**
+```python
+from trading.real_trader import RealTrader
+
+# 初始化交易器
+trader = RealTrader()
+
+# 查看余额
+balance = trader.get_account_balance()
+print(f"USDT余额: {balance.get('USDT', 0)}")
+
+# 获取价格
+btc_price = trader.get_symbol_price('BTCUSDT')
+print(f"BTC价格: ${btc_price:,.2f}")
+
+# 小仓位测试（1%资金）
+test_amount = 100.0  # $100 USDT
+btc_amount = test_amount / btc_price
+
+result = trader.place_market_order(
+    symbol='BTCUSDT',
+    side='buy',
+    amount=btc_amount,
+    reason="Testnet测试交易"
+)
+
+print(f"交易结果: {result}")
+
+trader.close()
+```
+
+#### 8.5 查看交易记录
+
+**命令行查看：**
+```bash
+python3 testnet_viewer.py
+```
+
+**Web 界面查看（推荐）：**
+访问：https://testnet.binance.vision/
+
+- Portfolio：查看余额和价值
+- Orders：查看挂单
+- Trade History：查看历史交易
+- Fills：查看成交记录
 
 ## 📊 使用场景示例
 
@@ -338,14 +423,53 @@ tail -f nof1.log
 - 查看 `CLAUDE.md` 了解代码架构
 - 运行 `python3 demo.py` 查看详细演示
 
+## 🔄 交易模式切换
+
+### 模式 1：纸交易（虚拟资金）
+```python
+# config.py
+USE_TESTNET = False  # 关闭Testnet
+# 使用虚拟100,000 USDT，完全安全
+```
+
+### 模式 2：Testnet（推荐测试）
+```python
+# .env 或环境变量
+USE_TESTNET=true
+TESTNET_API_KEY=your_key
+TESTNET_SECRET_KEY=your_secret
+
+# config.py
+USE_TESTNET = True
+# 使用真实API + 虚拟资金，接近实盘体验
+```
+
+### 模式 3：实盘交易（高风险！）
+```python
+# .env
+BINANCE_API_KEY=real_api_key
+BINANCE_SECRET_KEY=real_secret
+USE_TESTNET=false
+
+# config.py
+USE_TESTNET = False
+CURRENT_MODE = 'live'
+# ⚠️ 真实资金，高风险！务必先在Testnet充分测试
+```
+
 ## 🎯 下一步计划
 
-根据 `README.md`，未来计划包括：
+已完成：
+- [x] ✅ Binance Testnet 集成
+- [x] ✅ 真实交易执行器
+- [x] ✅ 多种订单类型支持
+
+未来计划：
 - [ ] 支持更多交易所（Hyperliquid, OKX, Bybit）
 - [ ] 添加更多技术指标
 - [ ] 实现 WebSocket 实时数据推送
 - [ ] 添加数据可视化
-- [ ] 实现自动交易功能
+- [ ] 实现 LLM 驱动的自动交易功能
 
 ## 📞 支持
 
