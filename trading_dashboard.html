@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nof1 交易决策监控面板</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .stat-card .label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-card .change {
+            font-size: 0.85em;
+            margin-top: 8px;
+            color: #28a745;
+        }
+
+        .section {
+            padding: 30px;
+        }
+
+        .section h2 {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: #333;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .decisions-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .decisions-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .decisions-table th,
+        .decisions-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .decisions-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .action-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            color: white;
+        }
+
+        .action-BUY {
+            background: #28a745;
+        }
+
+        .action-SELL {
+            background: #dc3545;
+        }
+
+        .action-HOLD {
+            background: #6c757d;
+        }
+
+        .confidence-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #667eea);
+            transition: width 0.5s ease;
+        }
+
+        .pnl-positive {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .pnl-negative {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .pnl-zero {
+            color: #6c757d;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .last-update {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .loading {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Nof1 交易决策监控面板</h1>
+            <div class="subtitle">LLM驱动的量化交易系统 - 实时监控</div>
+        </div>
+
+        <div class="stats-grid" id="statsGrid">
+            <div class="loading">加载中...</div>
+        </div>
+
+        <div class="section">
+            <h2>📊 决策记录 (最近100条)</h2>
+            <div style="margin-bottom: 15px;">
+                <button class="refresh-btn" onclick="loadDecisions()">🔄 刷新数据</button>
+                <button class="refresh-btn" onclick="autoRefresh()" id="autoRefreshBtn">⏸️ 停止自动刷新</button>
+            </div>
+            <div id="decisionsTable">
+                <div class="loading">加载中...</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📈 盈利趋势</h2>
+            <div class="chart-container">
+                <canvas id="pnlChart" height="100"></canvas>
+            </div>
+        </div>
+
+        <div class="last-update" id="lastUpdate">
+            最后更新: 加载中...
+        </div>
+    </div>
+
+    <script>
+        let autoRefreshInterval;
+        let isAutoRefreshing = true;
+
+        // 页面加载时获取数据
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStats();
+            loadDecisions();
+            loadProfitChart();
+            autoRefresh();
+
+            // 每30秒自动刷新
+            autoRefreshInterval = setInterval(() => {
+                if (isAutoRefreshing) {
+                    loadStats();
+                    loadDecisions();
+                    loadProfitChart();
+                }
+            }, 30000);
+        });
+
+        // 加载统计数据
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/v1/stats/summary');
+                const data = await response.json();
+
+                if (data.success) {
+                    const stats = data.data;
+                    document.getElementById('statsGrid').innerHTML = `
+                        <div class="stat-card">
+                            <div class="label">总决策数</div>
+                            <div class="value">${stats.total_decisions}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">总交易数</div>
+                            <div class="value">${stats.total_trades}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">总PnL</div>
+                            <div class="value ${stats.total_pnl >= 0 ? 'pnl-positive' : 'pnl-negative'}">$${stats.total_pnl.toFixed(2)}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">总成本</div>
+                            <div class="value">$${stats.total_cost.toFixed(4)}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">平均置信度</div>
+                            <div class="value">${stats.avg_confidence.toFixed(1)}%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">单笔成本</div>
+                            <div class="value">$${stats.cost_per_trade.toFixed(4)}</div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('加载统计数据失败:', error);
+                document.getElementById('statsGrid').innerHTML = `
+                    <div class="error">
+                        <strong>⚠️ 错误:</strong> 无法加载统计数据<br>
+                        ${error.message}
+                        <br><br>
+                        请确保API服务器正在运行: python3 run_api.py
+                    </div>
+                `;
+            }
+        }
+
+        // 加载决策记录
+        async function loadDecisions() {
+            try {
+                const response = await fetch('/api/v1/decisions?limit=100');
+                const data = await response.json();
+
+                if (data.success && data.data.length > 0) {
+                    let tableHTML = `
+                        <table class="decisions-table">
+                            <thead>
+                                <tr>
+                                    <th>时间</th>
+                                    <th>交易对</th>
+                                    <th>操作</th>
+                                    <th>置信度</th>
+                                    <th>PnL</th>
+                                    <th>执行时间</th>
+                                    <th>成本</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    data.data.forEach(decision => {
+                        const pnlClass = decision.pnl > 0 ? 'pnl-positive' :
+                                        decision.pnl < 0 ? 'pnl-negative' : 'pnl-zero';
+                        const confidencePercent = parseFloat(decision.confidence) || 0;
+
+                        tableHTML += `
+                            <tr>
+                                <td>${new Date(decision.timestamp).toLocaleString('zh-CN')}</td>
+                                <td><strong>${decision.symbol}</strong></td>
+                                <td><span class="action-badge action-${decision.action}">${decision.action}</span></td>
+                                <td>
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill" style="width: ${confidencePercent}%"></div>
+                                    </div>
+                                    <div style="text-align: center; font-size: 0.9em; margin-top: 5px;">
+                                        ${confidencePercent.toFixed(1)}%
+                                    </div>
+                                </td>
+                                <td class="${pnlClass}">$${(decision.pnl || 0).toFixed(2)}</td>
+                                <td>${(decision.execution_time || 0).toFixed(3)}s</td>
+                                <td>$${(decision.total_cost || 0).toFixed(4)}</td>
+                            </tr>
+                        `;
+                    });
+
+                    tableHTML += `
+                            </tbody>
+                        </table>
+                    `;
+
+                    document.getElementById('decisionsTable').innerHTML = tableHTML;
+                } else {
+                    document.getElementById('decisionsTable').innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #666;">
+                            📭 暂无决策记录<br>
+                            <small>请等待LLM生成决策...</small>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('加载决策记录失败:', error);
+                document.getElementById('decisionsTable').innerHTML = `
+                    <div class="error">
+                        <strong>⚠️ 错误:</strong> 无法加载决策记录<br>
+                        ${error.message}
+                        <br><br>
+                        请确保API服务器正在运行: python3 run_api.py
+                    </div>
+                `;
+            }
+
+            updateLastUpdateTime();
+        }
+
+        // 加载盈利图表
+        async function loadProfitChart() {
+            // 简化的盈利数据展示
+            try {
+                const response = await fetch('/api/v1/models/profit');
+                const data = await response.json();
+
+                // 这里可以添加图表绘制逻辑
+                // 暂时使用简单的文本展示
+                console.log('盈利数据:', data);
+            } catch (error) {
+                console.error('加载盈利图表失败:', error);
+            }
+        }
+
+        // 更新最后更新时间
+        function updateLastUpdateTime() {
+            const now = new Date();
+            document.getElementById('lastUpdate').innerHTML = `
+                最后更新: ${now.toLocaleString('zh-CN')}
+                <span style="color: #667eea;">(每30秒自动刷新)</span>
+            `;
+        }
+
+        // 手动刷新
+        function manualRefresh() {
+            loadStats();
+            loadDecisions();
+            loadProfitChart();
+        }
+
+        // 自动刷新控制
+        function autoRefresh() {
+            isAutoRefreshing = !isAutoRefreshing;
+            const btn = document.getElementById('autoRefreshBtn');
+
+            if (isAutoRefreshing) {
+                btn.textContent = '⏸️ 停止自动刷新';
+            } else {
+                btn.textContent = '▶️ 开启自动刷新';
+            }
+        }
+
+        // 页面关闭时清理定时器
+        window.addEventListener('beforeunload', function() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+        });
+    </script>
+
+    <!-- 使用简单图表库 (Chart.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
+        // 简单的PnL图表绘制
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('pnlChart').getContext('2d');
+            // 这里可以添加更复杂的图表绘制
+        });
+    </script>
+</body>
+</html>
