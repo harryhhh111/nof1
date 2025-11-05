@@ -52,7 +52,8 @@ except Exception as e:
 print("\n[测试3] 期货数据获取...")
 try:
     fetcher_futures = DataFetcher(use_futures=True)
-    futures_price = fetcher_futures.get_symbol_price('BTCUSDT')
+    futures_ticker = fetcher_futures.get_ticker('BTCUSDT')
+    futures_price = futures_ticker['last']
     print(f"   ✅ BTC期货价格: ${futures_price:,.2f}")
     fetcher_futures.close()
 except Exception as e:
