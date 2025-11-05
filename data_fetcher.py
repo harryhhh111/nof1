@@ -328,17 +328,17 @@ class DataFetcher:
             self.db.insert_klines(symbol, klines_4h, '4h')
 
             # 保存技术指标（3分钟）
-            if klines_3m:
+            if klines_3m and len(klines_3m) > 0:
                 latest_timestamp = klines_3m[-1][0]
                 self.db.insert_indicators(symbol, latest_timestamp, '3m', indicators_3m)
 
             # 保存技术指标（4小时）
-            if klines_4h:
+            if klines_4h and len(klines_4h) > 0:
                 latest_timestamp = klines_4h[-1][0]
                 self.db.insert_indicators(symbol, latest_timestamp, '4h', indicators_4h)
 
             # 保存永续合约数据
-            if klines_3m:
+            if klines_3m and len(klines_3m) > 0:
                 latest_timestamp = klines_3m[-1][0]
                 self.db.insert_perp_data(symbol, latest_timestamp, perp_data)
 

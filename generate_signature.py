@@ -64,7 +64,7 @@ print("=" * 80)
 print("\n完整 curl 命令:")
 print("=" * 80)
 print(f"""curl -X GET \\
-  "{os.getenv('BINANCE_BASE_URL', 'https://demo.binance.vision')}/api/v3/account" \\
+  "https://testnet.binance.vision/api/v3/account" \\
   -H "X-MBX-APIKEY: {api_key}" \\
   -H "Content-Type: application/json" \\
   -G \\

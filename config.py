@@ -85,11 +85,13 @@ if USE_TESTNET:
     if DEMO_API_KEY and DEMO_SECRET_KEY:
         BINANCE_API_KEY = DEMO_API_KEY
         BINANCE_SECRET_KEY = DEMO_SECRET_KEY
-        # 新的 Binance Demo Trading 使用独立的端点
-        BINANCE_BASE_URL = "https://demo.binance.vision"
-        BINANCE_FUTURES_URL = "https://demo.binancefuture.com"
+        # 注意: 新 Demo Trading (demo.binance.com) 可能没有公开 API
+        # 当前使用 testnet.binance.vision 作为备用方案
+        BINANCE_BASE_URL = "https://testnet.binance.vision"
+        BINANCE_FUTURES_URL = "https://testnet.binancefuture.com"
         TRADING_MODE_NAME = "Demo Trading (New)"
-        print(f"✅ 使用新的 Binance Demo Trading API")
+        print(f"⚠️  注意: demo.binance.com 可能没有公开 API")
+        print(f"   当前使用 testnet.binance.vision 作为备用")
     elif TESTNET_API_KEY and TESTNET_SECRET_KEY:
         BINANCE_API_KEY = TESTNET_API_KEY
         BINANCE_SECRET_KEY = TESTNET_SECRET_KEY

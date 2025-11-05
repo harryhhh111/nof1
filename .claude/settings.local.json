@@ -5,7 +5,12 @@
       "Bash(curl -I https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api)",
       "Bash(curl -s https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT)",
       "Bash(python3 testnet_viewer.py)",
-      "mcp__web-search-prime__webSearchPrime"
+      "mcp__web-search-prime__webSearchPrime",
+      "Bash(chmod +x /home/claude_user/nof1/data_collector_only.py)",
+      "Bash(python3 data_collector_only.py --help)",
+      "Bash(python3 quick_query.py summary)",
+      "Bash(chmod +x /home/claude_user/nof1/quick_test_data_collection.py)",
+      "Bash(python3 quick_test_data_collection.py)"
     ],
     "deny": [],
     "ask": []

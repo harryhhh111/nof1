@@ -142,6 +142,13 @@ class Database:
             cursor = conn.cursor()
 
             for kline in klines:
+                # 安全检查：确保 kline 有足够的元素
+                if len(kline) < 6:
+                    continue
+
+                # 处理 close_time，如果不存在则设为 None
+                close_time = kline[6] if len(kline) > 6 else None
+
                 cursor.execute(f"""
                     INSERT OR REPLACE INTO {table_name}
                     (symbol, timestamp, open, high, low, close, volume, close_time)
@@ -154,7 +161,7 @@ class Database:
                     float(kline[3]),  # Low price
                     float(kline[4]),  # Close price
                     float(kline[5]),  # Volume
-                    kline[6]  # Close time
+                    close_time  # Close time
                 ))
 
             conn.commit()
