@@ -87,6 +87,31 @@ pip install -r requirements.txt
 
 ### 3. 运行
 
+#### 推荐：使用 start_nof1.sh（抗断连启动）
+```bash
+# 启动2小时系统（后台运行，终端可断开）
+./start_nof1.sh start 2
+
+# 查看状态
+./start_nof1.sh status
+
+# 停止系统
+./start_nof1.sh stop
+```
+
+#### 备选：使用 nof1.py 统一启动器
+```bash
+# 运行2小时
+python3 nof1.py --run 2
+
+# 仅启动API服务器
+python3 nof1.py --api
+
+# 查看结果
+python3 nof1.py --view
+```
+
+#### 传统方式：直接运行 main.py
 ```bash
 python main.py
 ```
@@ -95,27 +120,66 @@ python main.py
 
 ```
 nof1/
-├── README.md              # 项目文档
-├── CLAUDE.md              # AI 开发指南
-├── QUICKSTART.md          # 快速入门指南
-├── INSTALL.md             # 安装说明
-├── requirements.txt       # Python 依赖
-├── config.py              # 配置文件
-├── main.py               # 主程序
-├── data_fetcher.py       # 数据获取模块
-├── indicators.py         # 技术指标计算
-├── database.py           # 数据库操作
-├── scheduler.py          # 定时任务调度
-├── test_basic.py         # 基础功能测试
-├── run_tests.py          # 测试运行脚本
-└── tests/                # 测试目录
+├── 📄 核心文档
+│   ├── README.md                     # 项目文档（本文档）
+│   ├── CLAUDE.md                     # AI开发指南
+│   ├── QUICKSTART_TESTNET.md         # Testnet快速开始
+│   ├── ROBUST_STARTUP.md             # 抗断连启动指南
+│   └── requirements.txt              # Python依赖
+│
+├── 🚀 启动脚本
+│   ├── start_nof1.sh                 # 抗断连启动脚本（推荐）⭐
+│   ├── nof1.py                       # 统一启动器
+│   └── run_full_system.py            # 完整交易系统
+│
+├── 🔧 核心模块
+│   ├── config.py                     # 配置文件
+│   ├── main.py                       # 传统CLI入口
+│   ├── data_fetcher.py              # 数据获取（CCXT + Testnet）
+│   ├── indicators.py                # 技术指标（纯pandas）
+│   ├── database.py                  # SQLite数据库
+│   ├── scheduler.py                 # 任务调度
+│   ├── prompt_generator.py          # LLM提示生成器
+│   └── multi_timeframe_preprocessor.py  # 多时间框架分析
+│
+├── 💰 交易模块
+│   ├── trading/
+│   │   ├── real_trader.py           # 真实交易执行器⭐
+│   │   └── paper_trader.py          # 纸交易
+│   └── trading_dashboard.html       # HTML监控面板
+│
+├── 🧪 测试
+│   ├── testnet_demo.py              # Testnet集成测试⭐
+│   ├── testnet_viewer.py            # 查看Testnet交易
+│   ├── test_basic.py                # 基础功能测试
+│   └── run_tests.py                 # 测试运行脚本
+│
+├── 🗄️ 数据库工具
+│   ├── quick_query.py               # 快速查询⭐
+│   ├── view_database.py             # 交互式浏览器⭐
+│   ├── demo_database.py             # 数据库演示
+│   └── market_data.db               # 市场数据
+│
+├── 🤖 LLM客户端
+│   ├── llm_clients/                 # LLM客户端
+│   │   ├── llm_factory.py           # 工厂模式
+│   │   ├── deepseek_client.py
+│   │   └── qwen_client.py
+│   └── models/trading_decision.py   # 交易决策模型
+│
+├── ⚙️ 系统组件
+│   ├── scheduling/                  # 调度模块
+│   ├── risk_management/             # 风险管理
+│   ├── monitoring/                  # 性能监控
+│   └── api/main.py                  # FastAPI服务器
+│
+└── 🧪 测试目录（95%+覆盖率，92个测试）
     ├── __init__.py
-    ├── test_config.py
-    ├── test_indicators.py
-    ├── test_database.py
-    ├── test_data_fetcher.py
-    ├── test_scheduler.py
-    └── test_integration.py
+    ├── test_*.py                    # 各种测试文件
+    ├── test_integration_complete.py # 完整集成测试
+    └── run_tests.py
+
+⭐ = 重要文件/推荐使用
 ```
 
 ## 使用示例
@@ -158,34 +222,58 @@ python main.py --query --symbols BTCUSDT
 python main.py --status
 ```
 
-### Binance Testnet 真实交易（新增）
+### Binance Testnet 真实交易（推荐）
 
-#### 配置 Testnet API
+#### 步骤1：获取Testnet API
 
-**方法 1: .env 文件（推荐）**
-
-创建 `.env` 文件：
 ```bash
-TESTNET_API_KEY=your_testnet_api_key
-TESTNET_SECRET_KEY=your_testnet_secret_key
-USE_TESTNET=true
+# 访问 https://testnet.binance.vision/
+# 1. 使用GitHub登录
+# 2. 复制显示的API Key和Secret Key
 ```
 
-**方法 2: 环境变量**
+#### 步骤2：配置环境
+
+**方法1：创建.env文件（推荐）**
+```bash
+cat > /home/claude_user/nof1/.env << 'EOF'
+TESTNET_API_KEY=your_testnet_api_key_here
+TESTNET_SECRET_KEY=your_testnet_secret_key_here
+USE_TESTNET=true
+EOF
+```
+
+**方法2：环境变量**
 ```bash
 export TESTNET_API_KEY="your_api_key"
 export TESTNET_SECRET_KEY="your_secret_key"
 export USE_TESTNET="true"
 ```
 
-#### 运行 Testnet 测试
+#### 步骤3：启动系统
 
 ```bash
-# 验证 Testnet 连接
+# 启动2小时交易系统（推荐）
+./start_nof1.sh start 2
+
+# 查看状态
+./start_nof1.sh status
+
+# 停止系统
+./start_nof1.sh stop
+```
+
+#### 步骤4：验证测试
+
+```bash
+# 运行集成测试
 python3 testnet_demo.py
 
 # 查看持仓和交易
 python3 testnet_viewer.py
+
+# 查看Testnet余额
+python3 nof1.py --view
 ```
 
 #### 真实交易示例

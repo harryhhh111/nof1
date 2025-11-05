@@ -75,7 +75,39 @@ python3 test_basic.py
 - 数据库操作
 - 数据格式化
 
-### 第三步：获取实时数据
+### 第三步：启动交易系统（推荐方式）
+
+#### 使用 start_nof1.sh（抗断连启动）
+```bash
+# 启动2小时交易系统（后台运行，终端可断开）
+./start_nof1.sh start 2
+
+# 查看状态
+./start_nof1.sh status
+
+# 停止系统
+./start_nof1.sh stop
+```
+
+**优势**：
+- ✅ 终端断开后继续运行
+- ✅ PID文件管理，防止重复启动
+- ✅ 日志分离，便于调试
+- ✅ 优雅停止
+
+#### 使用 nof1.py 统一启动器
+```bash
+# 前台运行2小时
+python3 nof1.py --run 2
+
+# 仅启动API服务器
+python3 nof1.py --api
+
+# 查看结果
+python3 nof1.py --view
+```
+
+### 第四步：获取实时数据（传统方式）
 ```bash
 # 获取单个交易对数据（JSON 格式）
 python main.py --symbol BTCUSDT
@@ -87,7 +119,7 @@ python main.py --symbols BTCUSDT ETHUSDT SOLUSDT
 python main.py --symbol BTCUSDT --output print
 ```
 
-### 第四步：启动持续数据获取
+### 第五步：启动持续数据获取
 ```bash
 # 启动定时调度器（默认每 3 分钟更新一次）
 python main.py --schedule
@@ -96,7 +128,7 @@ python main.py --schedule
 python main.py --schedule --symbols BTCUSDT ETHUSDT --interval 60
 ```
 
-### 第五步：查看系统状态
+### 第六步：查看系统状态
 ```bash
 # 显示数据库记录数、监控状态等
 python main.py --status

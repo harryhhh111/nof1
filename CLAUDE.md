@@ -11,15 +11,17 @@ This is a **comprehensive LLM-powered cryptocurrency trading system** that combi
 - **Parallel LLM decision making** (DeepSeek + Qwen3)
 - **Intelligent decision caching** to reduce API costs
 - **Binance Testnet real trading** with virtual funds (10,000 USDT)
+- **Robust startup script** (start_nof1.sh) - resistant to disconnections
 - **Unified launcher** (nof1.py) for all operations
 - **Real trading executor** with market/limit/stop orders
-- **API server** (FastAPI) for real-time monitoring
+- **FastAPI server** for real-time monitoring (port 8000)
 - **HTML dashboard** (trading_dashboard.html) with auto-refresh
+- **Complete database tools** (quick_query, view_database, demo_database)
 - **Risk assessment and position sizing**
-- **Historical backtesting engine**
 - **Real-time performance monitoring**
 - **Automated 5-minute decision cycles**
-- **Complete test suite and documentation**
+- **Complete test suite** (95%+ coverage, 92 test cases)
+- **Comprehensive documentation** (user guides, API docs, dev guides)
 
 **⚠️ IMPORTANT**:
 - The system uses **Binance Testnet** (real API, virtual funds) for trading, not paper trading
@@ -52,6 +54,32 @@ python3 nof1.py --test               # Test Binance Testnet integration
 # Quick start workflow
 python3 nof1.py --run 2 && python3 nof1.py --view
 ```
+
+### Robust Startup Script (Production-Ready)
+```bash
+# Production-grade startup with process management
+./start_nof1.sh start 2              # Run for 2 hours (background, disconnection-resistant)
+
+# System management
+./start_nof1.sh status               # View system status
+./start_nof1.sh stop                 # Stop all services gracefully
+./start_nof1.sh restart              # Restart system
+./start_nof1.sh logs                 # View logs
+
+# Advanced usage
+./start_nof1.sh start-api            # Start API server only
+./start_nof1.sh start 24             # Run for 24 hours
+./start_nof1.sh cleanup              # Clean old logs (7+ days)
+
+# Monitor in real-time
+tail -f logs/trading_*.log           # Follow trading logs
+```
+**Why start_nof1.sh?**
+- ✅ **Disconnection-resistant**: Uses `setsid` + `nohup` to survive terminal close
+- ✅ **Process management**: PID files prevent duplicate runs
+- ✅ **Graceful shutdown**: Stops services properly without force-kill
+- ✅ **Log separation**: Individual log files for each component
+- ✅ **Auto-recovery**: Cleans up stale PID files automatically
 
 ### Legacy Commands
 ```bash
@@ -369,6 +397,65 @@ Key packages from `requirements.txt`:
 
 **Note**: Technical indicators are implemented using **pure pandas** (no pandas-ta dependency) for better control and reliability.
 
+## 🔄 版本控制要求
+
+### ⚠️ 重要：每次更新必须推送GitHub
+
+**所有代码、文档、配置更新必须立即推送到GitHub**，不得在本地未提交状态过夜。
+
+### Git工作流程
+```bash
+# 1. 添加所有更改
+git add .
+
+# 2. 提交更改（包含详细说明）
+git commit -m "$(cat << 'EOF'
+📚 docs: 更新所有文档以反映项目最新状态
+
+- 更新CLAUDE.md：添加Robust启动脚本信息
+- 更新README.md：重新组织，突出核心特性
+- 新增DATABASE_GUIDE.md：完整数据库使用指南
+- 更新QUICKSTART_TESTNET.md：添加最佳实践
+- 更新docs/user/*：补充启动脚本和使用说明
+- 强调start_nof1.sh作为推荐启动方式
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+EOF
+)"
+
+# 3. 推送到GitHub
+git push origin main
+
+# 4. 验证推送成功
+git status
+```
+
+### 提交消息规范
+- **格式**: `type(scope): description`
+- **类型**:
+  - `docs` - 文档更新
+  - `feat` - 新功能
+  - `fix` - 错误修复
+  - `refactor` - 代码重构
+  - `test` - 测试相关
+- **示例**:
+  - `docs: 更新快速开始指南`
+  - `feat: 新增Testnet交易功能`
+  - `fix: 修复数据获取模块错误`
+
+### ❌ 禁止的行为
+- ❌ 在本地保留未提交的更改过夜
+- ❌ 一次性提交过多不相关的更改
+- ❌ 使用无意义的提交消息（如"update", "fix", "asdf"）
+- ❌ 提交敏感信息（API密钥、密码等）
+
+### ✅ 强制要求
+- ✅ 每次文档更新后立即推送
+- ✅ 代码修改后立即推送
+- ✅ 配置变更后立即推送
+- ✅ 提交消息必须清晰描述更改内容
+- ✅ 大型更改分多次提交，便于追踪
+
 ## Testing Infrastructure
 
 ### Test Suite
@@ -418,84 +505,102 @@ pytest tests/ -v
 
 ```
 nof1/
-├── README.md                     # Main project documentation
-├── CLAUDE.md                     # AI developer guide (this file)
-├── QUICKSTART.md                 # Quick start guide
-├── QUICKSTART_TESTNET.md         # Testnet quick start (NEW)
-├── INSTALL.md                    # Installation instructions
-├── DATABASE_GUIDE.md             # Database viewing guide
-├── PROJECT_SUMMARY.md            # Project implementation summary
-├── requirements.txt              # Python dependencies
-├── nof1.py                       # Unified launcher (RECOMMENDED)
-├── run_full_system.py            # Core trading system (uses Testnet)
-├── run_api.py                    # API server launcher
-├── config.py                     # Configuration file (enhanced with Testnet)
-├── main.py                       # Legacy CLI entry point
-├── data_fetcher.py              # Data acquisition module (Testnet support)
-├── indicators.py                # Technical indicators (pure pandas)
-├── database.py                  # SQLite database operations
-├── scheduler.py                 # Legacy task scheduler
-├── testnet_demo.py              # Testnet integration test
-├── testnet_viewer.py            # View Testnet positions/trades
-├── trading_dashboard.html       # Real-time monitoring dashboard
-├── test_basic.py                # Basic functionality tests
-├── run_tests.py                 # Test runner
-├── demo.py                      # System demonstration
-├── quick_query.py               # Quick database queries
-├── view_database.py             # Interactive database viewer
-├── demo_database.py             # Database demo tool
-├── llm_clients/                 # LLM client modules
-│   ├── __init__.py
-│   ├── llm_factory.py
-│   ├── deepseek_client.py
-│   └── qwen_client.py
-├── models/                      # Data models
-│   ├── __init__.py
-│   └── trading_decision.py      # Trading decision model
-├── trading/                     # Trading modules
-│   ├── __init__.py
-│   ├── paper_trader.py          # Paper trading simulator (legacy)
-│   └── real_trader.py           # Real trading executor (Testnet/Live)
-├── scheduling/                  # Scheduling modules
-│   ├── __init__.py
-│   ├── high_freq_scheduler.py
-│   └── decision_cache.py
-├── risk_management/             # Risk management
-│   ├── __init__.py
-│   ├── backtest_engine.py
-│   └── risk_manager.py
-├── monitoring/                  # Performance monitoring
-│   ├── __init__.py
-│   └── performance_monitor.py
-├── api/                         # API service
-│   ├── __init__.py
-│   └── main.py
-├── docs/                        # Documentation
-│   ├── user/                    # User guides
-│   │   ├── README.md
-│   │   ├── QUICKSTART.md
-│   │   ├── INSTALL.md
-│   │   ├── API_DOCUMENTATION.md
-│   │   └── TESTNET_INTEGRATION.md  # Testnet guide (NEW)
-│   ├── archive/                 # Archive docs
-│   ├── dev/                     # Developer docs
-│   └── project/                 # Project docs (CLAUDE.md moved to root)
-└── tests/                       # Test directory
+├── 📄 Core Documentation
+│   ├── README.md                     # Main project documentation
+│   ├── CLAUDE.md                     # AI developer guide (this file)
+│   ├── QUICKSTART.md                 # Quick start guide
+│   ├── QUICKSTART_TESTNET.md         # Testnet quick start
+│   ├── ROBUST_STARTUP.md             # Robust startup guide (抗断连)
+│   ├── PROJECT_SUMMARY.md            # Project implementation summary
+│   └── requirements.txt              # Python dependencies
+│
+├── 🚀 Startup Scripts
+│   ├── nof1.py                       # Unified launcher
+│   ├── start_nof1.sh                 # Robust startup script (抗断连) ⭐
+│   ├── run_full_system.py            # Core trading system (uses Testnet)
+│   └── run_api.py                    # API server launcher
+│
+├── 🔧 Core Modules
+│   ├── config.py                     # Configuration file (Testnet ready)
+│   ├── main.py                       # Legacy CLI entry point
+│   ├── data_fetcher.py              # Data acquisition (CCXT + Testnet)
+│   ├── indicators.py                # Technical indicators (pure pandas)
+│   ├── database.py                  # SQLite database operations
+│   ├── scheduler.py                 # Legacy task scheduler
+│   ├── prompt_generator.py          # LLM prompt generator
+│   └── multi_timeframe_preprocessor.py  # Multi-timeframe analysis
+│
+├── 🧪 Testing & Demo
+│   ├── testnet_demo.py              # Testnet integration test ⭐
+│   ├── testnet_viewer.py            # View Testnet positions/trades
+│   ├── testnet_trade_demo.py        # Trade execution demo
+│   ├── test_basic.py                # Basic functionality tests
+│   ├── run_tests.py                 # Test runner
+│   └── demo.py                      # System demonstration
+│
+├── 🗄️ Database Tools
+│   ├── quick_query.py               # Quick database queries ⭐
+│   ├── view_database.py             # Interactive database viewer ⭐
+│   ├── demo_database.py             # Database demo tool ⭐
+│   ├── market_data.db               # Market data (3m, 4h, indicators)
+│   ├── performance_monitor.db       # Trading metrics
+│   └── real_trading.db              # Real trading records
+│
+├── 🤖 LLM Clients
+│   ├── llm_clients/
+│   │   ├── __init__.py
+│   │   ├── llm_factory.py           # LLM factory (DeepSeek + Qwen3)
+│   │   ├── deepseek_client.py
+│   │   └── qwen_client.py
+│   └── models/
+│       ├── __init__.py
+│       └── trading_decision.py      # Trading decision model
+│
+├── 💰 Trading
+│   ├── trading/
+│   │   ├── __init__.py
+│   │   ├── real_trader.py           # Real trading executor (Binance Testnet) ⭐
+│   │   └── paper_trader.py          # Paper trading simulator (legacy)
+│   └── trading_dashboard.html       # Real-time monitoring dashboard
+│
+├── ⚙️ System Components
+│   ├── scheduling/                  # Scheduling modules
+│   │   ├── __init__.py
+│   │   ├── high_freq_scheduler.py
+│   │   └── decision_cache.py
+│   ├── risk_management/             # Risk management
+│   │   ├── __init__.py
+│   │   ├── backtest_engine.py
+│   │   └── risk_manager.py
+│   ├── monitoring/                  # Performance monitoring
+│   │   ├── __init__.py
+│   │   └── performance_monitor.py
+│   └── api/                         # FastAPI service
+│       └── main.py
+│
+├── 📚 Documentation
+│   ├── docs/
+│   │   ├── user/                    # User guides
+│   │   │   ├── README.md
+│   │   │   ├── QUICKSTART.md
+│   │   │   ├── INSTALL.md
+│   │   │   ├── API_DOCUMENTATION.md
+│   │   │   └── TESTNET_INTEGRATION.md
+│   │   ├── dev/                     # Developer docs
+│   │   │   └── DEVELOPMENT.md
+│   │   └── project/                 # Project docs
+│   │
+│   ├── logs/                        # Runtime logs
+│   └── pids/                        # Process ID files (for start_nof1.sh)
+│
+└── 🧪 Tests (95%+ Coverage, 92 Tests)
     ├── __init__.py
-    ├── test_config.py
-    ├── test_indicators.py
-    ├── test_database.py
-    ├── test_data_fetcher.py
-    ├── test_scheduler.py
-    ├── test_integration.py
-    ├── test_llm_clients.py
-    ├── test_paper_trader.py
-    ├── test_decision_cache.py
-    ├── test_risk_manager.py
-    ├── test_performance_monitor.py
-    ├── test_multi_timeframe_preprocessor.py
-    ├── test_integration_complete.py
-    └── run_tests.py
+    ├── test_*.py                    # Individual test files
+    ├── test_integration_complete.py # Complete end-to-end test
+    ├── test_llm_clients.py          # LLM client tests
+    └── run_tests.py                 # Test runner
+
+⭐ = Highly recommended/important files
 ```
 
 ## Configuration (Binance Testnet)

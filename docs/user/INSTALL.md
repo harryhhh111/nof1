@@ -68,7 +68,33 @@ python main.py --symbols BTCUSDT ETHUSDT SOLUSDT
 python main.py --symbol BTCUSDT --output print
 ```
 
-### 第四步：启动持续监控
+### 第四步：启动交易系统（推荐）
+
+#### 使用 start_nof1.sh（抗断连）
+```bash
+# 启动2小时交易系统
+./start_nof1.sh start 2
+
+# 查看状态
+./start_nof1.sh status
+
+# 停止系统
+./start_nof1.sh stop
+```
+
+#### 使用 nof1.py 统一启动器
+```bash
+# 前台运行2小时
+python3 nof1.py --run 2
+
+# 仅启动API
+python3 nof1.py --api
+
+# 查看结果
+python3 nof1.py --view
+```
+
+### 第五步：启动持续监控（传统方式）
 ```bash
 # 后台运行，每 3 分钟更新一次
 python main.py --schedule
@@ -76,7 +102,7 @@ python main.py --schedule
 
 按 `Ctrl+C` 可以安全停止。
 
-### 第五步：查看系统状态
+### 第六步：查看系统状态
 ```bash
 python main.py --status
 ```
