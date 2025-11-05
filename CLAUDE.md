@@ -512,6 +512,9 @@ nof1/
 │   ├── QUICKSTART_TESTNET.md         # Testnet quick start
 │   ├── ROBUST_STARTUP.md             # Robust startup guide (抗断连)
 │   ├── PROJECT_SUMMARY.md            # Project implementation summary
+│   ├── DEMO_TRADING_UPGRADE.md       # Demo Trading upgrade guide ⭐
+│   ├── DEMO_TRADING_MIGRATION_REPORT.md # Migration report ⭐
+│   ├── DEMO_TRADING_INITIAL_FUNDS.md # Initial funds guide ⭐
 │   └── requirements.txt              # Python dependencies
 │
 ├── 🚀 Startup Scripts
@@ -534,6 +537,9 @@ nof1/
 │   ├── testnet_demo.py              # Testnet integration test ⭐
 │   ├── testnet_viewer.py            # View Testnet positions/trades
 │   ├── testnet_trade_demo.py        # Trade execution demo
+│   ├── demo_trading_test.py         # Demo Trading integration test ⭐
+│   ├── demo_quick_test.py           # Quick Demo Trading verification ⭐
+│   ├── check_initial_funds.py       # Check Demo Trading initial funds ⭐
 │   ├── test_basic.py                # Basic functionality tests
 │   ├── run_tests.py                 # Test runner
 │   └── demo.py                      # System demonstration
@@ -603,20 +609,45 @@ nof1/
 ⭐ = Highly recommended/important files
 ```
 
-## Configuration (Binance Testnet)
+## Configuration (Binance Demo Trading)
 
-### Getting Testnet API Keys
-1. Visit: https://testnet.binance.vision/
-2. Login with GitHub account (recommended)
-3. Copy the displayed API Key and Secret Key
-4. Testnet provides virtual funds: 10,000+ USDT, 1+ BTC, etc.
+### Getting Demo Trading API Keys (Recommended)
+1. Visit: https://demo.binance.com/
+2. Login with your account
+3. Go to API Management: https://demo.binance.com/en/my/settings/api-management
+4. Create API Key and Secret Key
+5. Enable "Reading" permissions (minimum required)
+
+### Demo Trading Initial Funds
+After resetting your Demo Trading account, you will receive:
+- **USDT**: 5,000 (main trading asset)
+- **BTC**: 0.05 (Bitcoin initial balance)
+- **ETH**: 1 (Ethereum initial balance)
+- **BNB**: 2 (Binance Coin initial balance)
+
+**Total Initial Value**: ~5,000+ USDT
 
 ### Environment Variables (.env file)
 Create a `.env` file in the project root:
 ```bash
-TESTNET_API_KEY=your_testnet_api_key_here
-TESTNET_SECRET_KEY=your_testnet_secret_key_here
+# New Demo Trading API (Recommended)
+DEMO_API_KEY=your_demo_api_key_here
+DEMO_SECRET_KEY=your_demo_secret_key_here
+
+# Old Testnet API (Backward compatibility)
+# TESTNET_API_KEY=your_testnet_api_key_here
+# TESTNET_SECRET_KEY=your_testnet_secret_key_here
+
 USE_TESTNET=true
+```
+
+### Checking Initial Funds
+```bash
+# Check Demo Trading initial funds
+python3 check_initial_funds.py
+
+# View balance in detail
+python3 testnet_viewer.py
 ```
 
 ### Trading Mode Selection (config.py)

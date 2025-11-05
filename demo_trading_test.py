@@ -76,15 +76,61 @@ try:
 
     # 获取账户余额
     balance = trader_spot.get_account_balance()
-    print(f"\n💰 账户余额:")
-    for asset, amount in balance.items():
-        print(f"   {asset}: {amount:.6f}")
 
-    # 检查USDT余额
-    if 'USDT' not in balance or balance['USDT'] < 10:
-        print("\n⚠️  警告: USDT余额不足（至少需要10 USDT进行测试）")
+    if not balance:
+        print("\n⚠️  警告: 无法获取余额 (API权限不足)")
+        print("   请检查 API Key 是否开启读取权限")
+        print("   参考: https://demo.binance.com/en/my/wallet/demo/main")
+        print("\n   预期初始资金:")
+        print("     USDT: 5,000")
+        print("     BTC:  0.05")
+        print("     ETH:  1")
+        print("     BNB:  2")
     else:
-        print("\n✅ USDT余额充足")
+        print(f"\n💰 账户余额 (Demo Trading):")
+
+        # 显示所有资产
+        expected_assets = {'USDT': 5000, 'BTC': 0.05, 'ETH': 1.0, 'BNB': 2.0}
+        matched = 0
+
+        for asset, expected_amount in expected_assets.items():
+            actual_amount = balance.get(asset, 0)
+            if abs(actual_amount - expected_amount) < 0.001:
+                status = "✅"
+                matched += 1
+            else:
+                status = "⚠️"
+            print(f"   {asset:>4}: {actual_amount:>10.6f} {status}")
+
+        # 显示其他资产
+        for asset, amount in balance.items():
+            if asset not in expected_assets and amount > 0:
+                print(f"   {asset:>4}: {amount:>10.6f} ℹ️")
+
+        print(f"\n   匹配状态: {matched}/{len(expected_assets)} 初始资产")
+
+        # 检查USDT余额
+        if 'USDT' not in balance or balance['USDT'] < 10:
+            print("\n⚠️  警告: USDT余额不足（至少需要10 USDT进行测试）")
+            print("   如果是 Reset 后，应该有 5000 USDT")
+        elif balance['USDT'] >= 5000:
+            print(f"\n✅ USDT余额充足 (5,000)")
+        else:
+            print(f"\n✅ USDT余额: {balance['USDT']:.2f}")
+
+        # 估算总价值
+        try:
+            btc_price = trader_spot.get_symbol_price('BTCUSDT')
+            eth_price = trader_spot.get_symbol_price('ETHUSDT')
+
+            total_value = (
+                balance.get('USDT', 0) +
+                balance.get('BTC', 0) * btc_price +
+                balance.get('ETH', 0) * eth_price
+            )
+            print(f"\n   估算总价值: ${total_value:,.2f} USDT")
+        except:
+            pass
 
     # 测试获取当前价格
     current_price = trader_spot.get_symbol_price('BTCUSDT')
