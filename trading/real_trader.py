@@ -63,7 +63,8 @@ class RealTrader:
     def __init__(
         self,
         database_path: Optional[str] = None,
-        fee_rate: float = 0.001  # 0.1% 手续费
+        fee_rate: float = 0.001,  # 0.1% 手续费
+        use_futures: bool = False  # 是否使用期货交易
     ):
         """
         初始化真实交易执行器
@@ -71,23 +72,42 @@ class RealTrader:
         Args:
             database_path: 数据库路径
             fee_rate: 手续费率
+            use_futures: 是否使用期货交易（否则使用现货）
         """
         import config
 
         self.fee_rate = fee_rate
         self.use_testnet = config.USE_TESTNET
-        self.exchange = ccxt.binance(config.EXCHANGE_CONFIG)
+        self.use_futures = use_futures
         self.database_path = database_path or "real_trading.db"
         self.positions: Dict[str, Dict] = {}
         self.orders: List[OrderInfo] = []
 
+        # 选择合适的交易所配置
+        if use_futures:
+            self.exchange = ccxt.binance({
+                **config.FUTURES_CONFIG,
+                'type': 'future'  # 期货交易
+            })
+            mode_name = f"{config.CURRENT_MODE.upper()} (Futures)"
+        else:
+            self.exchange = ccxt.binance({
+                **config.EXCHANGE_CONFIG,
+                'type': 'spot'  # 现货交易
+            })
+            mode_name = f"{config.CURRENT_MODE.upper()} (Spot)"
+
         # 验证API Key
         if not config.BINANCE_API_KEY or not config.BINANCE_SECRET_KEY:
-            logger.error("未配置API Key！请检查config.py中的配置")
-            raise ValueError("缺少API认证信息")
+            error_msg = f"未配置API Key！请检查config.py中的配置"
+            logger.error(error_msg)
+            if config.DEMO_API_KEY:
+                error_msg += f"\n发现 Demo API Key: {config.DEMO_API_KEY[:20]}..."
+            raise ValueError(error_msg)
 
         self._init_database()
-        logger.info(f"真实交易执行器已初始化 - 模式: {'Testnet' if self.use_testnet else 'Live'}")
+        logger.info(f"交易执行器已初始化 - 模式: {mode_name}")
+        logger.info(f"Base URL: {config.BINANCE_BASE_URL}")
 
     def _init_database(self):
         """初始化数据库"""

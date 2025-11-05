@@ -19,23 +19,38 @@ logger = logging.getLogger(__name__)
 class DataFetcher:
     """数据获取类"""
 
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: Optional[str] = None, use_futures: bool = False):
         """
         初始化数据获取器
 
         Args:
             db_path: 数据库路径
+            use_futures: 是否使用期货交易（否则使用现货）
         """
         # 使用配置文件中的交易所配置
         import config
-        self.exchange = ccxt.binance(config.EXCHANGE_CONFIG)
+        self.use_futures = use_futures
+
+        # 选择合适的交易所配置
+        if use_futures:
+            self.exchange = ccxt.binance({
+                **config.FUTURES_CONFIG,
+                'type': 'future'  # 期货交易
+            })
+        else:
+            self.exchange = ccxt.binance({
+                **config.EXCHANGE_CONFIG,
+                'type': 'spot'  # 现货交易
+            })
+
         self.db = Database(db_path) if db_path else Database()
         self.ti = TechnicalIndicators()
         self.use_testnet = config.USE_TESTNET
 
         # 记录当前模式
-        mode = "Testnet" if self.use_testnet else "Real"
+        mode = f"{config.CURRENT_MODE.upper()} ({'Futures' if use_futures else 'Spot'})"
         logger.info(f"数据获取器已初始化 - 模式: {mode}")
+        logger.info(f"Base URL: {config.BINANCE_BASE_URL}")
 
     def get_klines(self, symbol: str, timeframe: str = '3m', limit: int = 100) -> List:
         """
