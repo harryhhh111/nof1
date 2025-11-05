@@ -58,7 +58,7 @@ def show_account_balance(trader):
 def show_positions(trader):
     """显示持仓信息"""
     print("\n" + "=" * 80)
-    print(" 📊 当前持仓")
+    print(" 📊 当前持仓（包括初始资产）")
     print("=" * 80)
 
     try:
@@ -68,23 +68,68 @@ def show_positions(trader):
             print("   📭 当前无持仓")
             return
 
-        for pos in positions:
-            symbol = pos['symbol']
-            size = float(pos.get('contracts', 0))
-            side = pos['side']
-            entry_price = float(pos.get('entryPrice', 0))
-            margin = float(pos.get('margin', 0))
+        # 分组显示：初始资产和其他资产
+        initial_positions = [p for p in positions if p.get('is_initial_asset', False)]
+        other_positions = [p for p in positions if not p.get('is_initial_asset', False)]
 
-            if abs(size) > 0.0001:  # 只显示有效持仓
-                print(f"\n   {symbol}")
-                print(f"   ├─ 方向: {side}")
-                print(f"   ├─ 数量: {size:.6f}")
-                print(f"   ├─ 入场价: ${entry_price:,.2f}")
-                print(f"   ├─ 保证金: ${margin:,.2f}")
-                print(f"   └─ 保证金率: {pos.get('percentage', 0):.2f}%")
+        if initial_positions:
+            print("\n   🏆 初始资产持仓:")
+            for pos in initial_positions:
+                symbol = pos['symbol']
+                size = float(pos.get('contracts', 0))
+                side = pos['side']
+                entry_price = float(pos.get('entryPrice', 0))
+                margin = float(pos.get('margin', 0))
+                current_price = pos.get('current_price')
+                value = pos.get('value')
+
+                if abs(size) > 0.0001:
+                    print(f"\n   📦 {symbol}")
+                    print(f"   ├─ 类型: {pos.get('asset')} (初始资产)")
+                    print(f"   ├─ 方向: {side}")
+                    print(f"   ├─ 数量: {size:.6f}")
+                    print(f"   ├─ 入场价: ${entry_price:,.2f}")
+                    if current_price:
+                        print(f"   ├─ 当前价: ${current_price:,.2f}")
+                    if value:
+                        print(f"   └─ 市值: ${value:,.2f} USDT")
+                    else:
+                        print(f"   └─ 保证金: ${margin:,.2f}")
+
+        if other_positions:
+            if initial_positions:
+                print("\n" + "-" * 80)
+                print("   💼 其他持仓:")
+            else:
+                print("\n   💼 持仓:")
+            for pos in other_positions:
+                symbol = pos['symbol']
+                size = float(pos.get('contracts', 0))
+                side = pos['side']
+                entry_price = float(pos.get('entryPrice', 0))
+                margin = float(pos.get('margin', 0))
+                current_price = pos.get('current_price')
+                value = pos.get('value')
+
+                if abs(size) > 0.0001:
+                    print(f"\n   📦 {symbol}")
+                    print(f"   ├─ 方向: {side}")
+                    print(f"   ├─ 数量: {size:.6f}")
+                    print(f"   ├─ 入场价: ${entry_price:,.2f}")
+                    if current_price:
+                        print(f"   ├─ 当前价: ${current_price:,.2f}")
+                    if value:
+                        print(f"   └─ 市值: ${value:,.2f} USDT")
+                    else:
+                        print(f"   └─ 保证金: ${margin:,.2f}")
+
+        print("\n   💡 提示: 初始资产可用于做空操作")
+        print("   例如: 卖出 BTC 模拟 BTC 做空")
 
     except Exception as e:
         print(f"   ⚠️  获取持仓信息失败: {e}")
+        import traceback
+        traceback.print_exc()
 
 def show_recent_trades(trader, limit=20):
     """显示最近的交易记录"""

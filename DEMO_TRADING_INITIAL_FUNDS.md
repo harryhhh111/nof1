@@ -89,10 +89,72 @@ trader.close()
    - 新订单基于 USDT 余额
    - 默认使用 10% 的 USDT 进行交易
 
-2. **其他资产**
+2. **初始资产 (BTC, ETH, BNB)**
    - 系统会显示其价值
-   - 暂时不参与主动交易决策
-   - 可用于手动交易
+   - ✅ **新功能**: 可用于做空操作 (见下方详细说明)
+   - 初始资产会被标记和单独显示
+
+### 使用初始资产进行做空操作 🎯
+
+由于 Demo Trading **不支持期货交易**，我们使用初始资产来模拟做空操作：
+
+#### 原理
+- **做空 = 卖出持有的资产**
+- 例如：卖出 0.005 BTC (初始 0.05 BTC 的 10%)
+
+#### 操作步骤
+```python
+from trading.real_trader import RealTrader
+from models.trading_decision import TradingDecision
+
+trader = RealTrader(use_futures=False)
+
+# 创建做空决策 (卖出 BTC)
+decision = TradingDecision(
+    action="SELL",
+    symbol="BTCUSDT",           # 交易对
+    position_size=10.0,          # 卖出 10% 的 BTC 初始资产
+    confidence=85.0,
+    risk_level="MEDIUM",
+    reasoning="看空 BTC，使用初始资产做空",
+    stop_loss=105000,            # 止损价
+    take_profit=95000,           # 止盈价
+    timeframe="4h",
+    symbol="BTCUSDT"
+)
+
+# 执行决策
+result = trader.execute_decision(decision)
+```
+
+#### 做空逻辑说明
+1. **检查初始资产**: 系统会检查账户中是否有 BTC/ETH/BNB
+2. **计算数量**: 按 position_size 百分比计算要卖出的数量
+3. **执行卖出**: 下市价单卖出初始资产
+4. **模拟做空**: 相当于做空该资产
+
+#### 示例场景
+```
+初始资产:
+• BTC: 0.05
+• ETH: 1.0
+• BNB: 2.0
+
+执行 SELL BTCUSDT (10%):
+• 卖出: 0.05 * 0.10 = 0.005 BTC
+• 剩余: 0.045 BTC
+• 获得: 0.005 * 当前 BTC 价格 USDT
+• 效果: 模拟做空 BTC (如果 BTC 下跌，则盈利)
+```
+
+### 查看初始资产持仓
+```bash
+# 查看持仓 (包括初始资产)
+python3 demo_trading_viewer.py
+
+# 查看初始资产交易逻辑
+python3 test_initial_assets_trading.py
+```
 
 ### 示例交易逻辑
 ```python
@@ -102,6 +164,15 @@ usdt_amount = balance.get('USDT', 0)
 
 # 使用 10% 的 USDT 进行交易
 trade_amount = usdt_amount * 0.10
+
+# 使用初始资产进行做空
+if decision.action == "SELL":
+    # 检查是否有初始资产
+    base_asset = symbol.replace('USDT', '')
+    if base_asset in balance:
+        # 使用初始资产做空
+        initial_amount = balance[base_asset]
+        sell_amount = initial_amount * (position_size / 100)
 ```
 
 ## 🔄 资金重置 (Reset)

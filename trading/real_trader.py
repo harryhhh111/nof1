@@ -369,40 +369,54 @@ class RealTrader:
 
     def get_open_positions(self) -> List[Dict[str, Any]]:
         """
-        获取所有持仓
+        获取所有持仓（包括初始资产持仓）
 
         Returns:
             持仓列表
         """
         try:
-            # 注意: Demo Trading 期货持仓查询可能不可用
-            # 使用现货余额作为持仓信息
-            if self.use_futures:
-                # 期货模式：尝试获取持仓，如果失败则返回空
-                try:
-                    positions = self.exchange.fetch_positions()
-                    # 过滤非零持仓
-                    open_positions = [p for p in positions if abs(float(p['contracts'])) > 0]
-                    return open_positions
-                except Exception as e:
-                    logger.warning(f"期货持仓查询不可用: {e}")
-                    logger.info("   (Demo Trading 可能不支持期货持仓查询)")
-                    return []
-            else:
-                # 现货模式：获取现货余额
-                balance = self.get_account_balance()
-                positions = []
-                for asset, amount in balance.items():
-                    if asset not in ['USDT', 'USDC', 'BUSD'] and amount > 0:
+            # Demo Trading 现货模式：获取所有余额资产
+            balance = self.get_account_balance()
+            positions = []
+
+            # 过滤出非稳定币资产（初始资产）
+            initial_assets = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'DOGE', 'ADA', 'DOT', 'AVAX', 'MATIC']
+            for asset, amount in balance.items():
+                # 如果是初始资产或任何非稳定币资产
+                if asset not in ['USDT', 'USDC', 'BUSD', 'TUSD', 'FDUSD'] and amount > 0.000001:
+                    # 尝试获取当前价格以计算价值
+                    symbol = asset + 'USDT'
+                    try:
+                        current_price = self.get_symbol_price(symbol)
+                        value = amount * current_price
                         positions.append({
-                            'symbol': asset + 'USDT',
+                            'symbol': symbol,
                             'contracts': amount,
                             'side': 'long',
                             'entryPrice': 0,
                             'margin': 0,
-                            'percentage': 0
+                            'percentage': 0,
+                            'current_price': current_price,
+                            'value': value,
+                            'is_initial_asset': asset in initial_assets,
+                            'asset': asset
                         })
-                return positions
+                    except Exception as e:
+                        # 如果获取价格失败，仍然添加持仓
+                        positions.append({
+                            'symbol': symbol,
+                            'contracts': amount,
+                            'side': 'long',
+                            'entryPrice': 0,
+                            'margin': 0,
+                            'percentage': 0,
+                            'current_price': None,
+                            'value': None,
+                            'is_initial_asset': asset in initial_assets,
+                            'asset': asset
+                        })
+
+            return positions
         except Exception as e:
             logger.error(f"获取持仓失败: {e}")
             return []
@@ -525,17 +539,45 @@ class RealTrader:
             elif decision.action == "SELL":
                 # 检查是否有持仓
                 positions = self.get_open_positions()
-                btc_position = None
+                position = None
                 for pos in positions:
                     if pos['symbol'] == decision.symbol and float(pos['contracts']) > 0:
-                        btc_position = pos
+                        position = pos
                         break
 
-                if not btc_position:
-                    return {"status": "error", "message": f"未找到 {decision.symbol} 的持仓"}
+                # 如果没有持仓，检查初始资产（Demo Trading 支持）
+                if not position:
+                    balance = self.get_account_balance()
+                    # 从交易对符号中提取基础资产（BTCUSDT -> BTC）
+                    base_asset = decision.symbol.replace('USDT', '').replace('BTC', '').replace('ETH', '').replace('BNB', '')
+                    if decision.symbol.endswith('BTCUSDT'):
+                        base_asset = 'BTC'
+                    elif decision.symbol.endswith('ETHUSDT'):
+                        base_asset = 'ETH'
+                    elif decision.symbol.endswith('BNBUSDT'):
+                        base_asset = 'BNB'
+                    elif decision.symbol.endswith('SOLUSDT'):
+                        base_asset = 'SOL'
+                    elif decision.symbol.endswith('XRPUSDT'):
+                        base_asset = 'XRP'
+                    elif decision.symbol.endswith('DOGEUSDT'):
+                        base_asset = 'DOGE'
 
-                # 按百分比平仓
-                amount = float(btc_position['contracts']) * (decision.position_size / 100)
+                    # 检查是否有该初始资产
+                    if base_asset in balance and balance[base_asset] > 0:
+                        # 使用初始资产进行"做空"操作
+                        initial_balance = balance[base_asset]
+                        amount = initial_balance * (decision.position_size / 100)
+                        logger.info(f"使用初始 {base_asset} 持仓进行做空: {amount}")
+                    else:
+                        return {
+                            "status": "error",
+                            "message": f"未找到 {decision.symbol} 的持仓且无初始 {base_asset} 资产",
+                            "hint": "Demo Trading 可使用初始资产进行做空操作"
+                        }
+                else:
+                    # 按百分比平仓
+                    amount = float(position['contracts']) * (decision.position_size / 100)
 
                 # 下单
                 order_result = self.place_market_order(
