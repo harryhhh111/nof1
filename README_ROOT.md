@@ -13,20 +13,38 @@ pip install -r requirements.txt
 
 ### 启动系统（推荐）
 ```bash
-# 方式1：使用抗断连启动脚本
+# 方式1：使用无时间限制运行
+./start_nof1.sh start 999999         # 永久运行
+# 或
+nohup python3 run_full_system.py --hours 999999 > logs/trading_infinity.log 2>&1 &
+
+# 方式2：使用抗断连启动脚本
 ./start_nof1.sh start 2              # 运行2小时
 
-# 方式2：使用统一启动器
+# 方式3：使用统一启动器
 python3 nof1.py --run 2              # 运行2小时
 
-# 方式3：数据收集模式
-python3 scripts/data_collector_only.py
+# 方式4：仅数据收集模式（永久运行）
+nohup python3 scripts/data_collector_only.py > logs/data_collector.log 2>&1 &
+
+# 方式5：仅启动API服务器
+./start_nof1.sh start-api
+# 或
+python3 nof1.py --api
 ```
 
 ### 查看结果
 ```bash
-python3 nof1.py --view               # 查看交易决策和持仓
+# 推荐：使用监控脚本
+./scripts/check_trading.sh           # 快速状态检查
+./scripts/monitor_trading.sh         # 定期监控 (每5分钟)
+
+# 数据库查询
 python3 scripts/quick_query.py summary  # 查看数据库摘要
+python3 scripts/quick_query.py latest   # 查看最新数据
+
+# 查看交易结果
+python3 nof1.py --view               # 查看交易决策和持仓
 ```
 
 ## 📊 项目结构
@@ -63,6 +81,8 @@ nof1/
 - ✅ FastAPI服务器 (Port 8000)
 - ✅ HTML监控面板
 - ✅ 数据库工具集
+- ✅ 监控脚本工具 (check_trading.sh, monitor_trading.sh)
+- ✅ 无时间限制运行 (999999小时 = 永久)
 
 ## 📖 文档导航
 
@@ -72,7 +92,13 @@ nof1/
 - [数据库使用指南](docs/user/DATABASE_GUIDE.md)
 - [抗断连启动指南](docs/user/ROBUST_STARTUP.md)
 
+### 监控工具
+- [监控脚本使用指南](scripts/README_MONITORING.md)
+- [快速状态检查](scripts/check_trading.sh)
+- [定期监控工具](scripts/monitor_trading.sh)
+
 ### 开发者
+- [CLAUDE.md - AI开发指南](CLAUDE.md) (📌 位于根目录)
 - [交易工厂使用](CLAUDE.md#交易模块抽象工厂模式)
 - [API文档](docs/user/API_DOCUMENTATION.md)
 - [测试指南](docs/dev/DEVELOPMENT.md)
@@ -85,9 +111,18 @@ nof1/
 
 ### 系统运行
 ```bash
+# 推荐：永久运行
+nohup python3 run_full_system.py --hours 999999 > logs/trading_infinity.log 2>&1 &
+./start_nof1.sh start 999999         # 或使用此命令
+
+# 限时运行
+./start_nof1.sh start 2              # 运行2小时
 ./start_nof1.sh start 24             # 运行24小时
+
+# 系统管理
 ./start_nof1.sh status               # 查看状态
 ./start_nof1.sh stop                 # 停止服务
+./start_nof1.sh restart              # 重启服务
 python3 nof1.py --api                # 启动API服务器
 ```
 
@@ -116,28 +151,43 @@ python3 test_basic.py
 
 ### 监控
 ```bash
+# 推荐：使用监控脚本
+./scripts/check_trading.sh           # 快速状态检查 (推荐日常使用)
+./scripts/monitor_trading.sh         # 定期监控 (每5分钟自动刷新)
+
 # 查看日志
-tail -f logs/trading_*.log
+tail -f logs/trading_infinity.log    # 交易系统日志
+tail -f logs/data_collector.log      # 数据收集器日志
+./start_nof1.sh logs                 # 查看所有日志
 
-# 访问监控面板
-# 浏览器打开: web/trading_dashboard.html
+# API接口
+curl http://localhost:8000/api/v1/health     # 健康检查
+curl http://localhost:8000/api/v1/decisions  # 查看交易决策
 
-# API文档
-# 浏览器打开: http://localhost:8000/docs
+# Web界面
+# 浏览器打开: http://localhost:8000/docs (API文档)
+# 浏览器打开: https://testnet.binance.vision/ (Testnet官方界面)
 ```
 
 ## ⚠️ 重要提示
 
-1. **测试模式**: 系统默认使用Testnet模式，资金为虚拟资金
-2. **API配置**: 需要配置Testnet API Key（从 [testnet.binance.vision](https://testnet.binance.vision) 获取）
-3. **网络限制**: Demo Trading API在当前网络环境下可能不可达
-4. **数据安全**: 请勿将 `.env` 文件提交到版本控制
+1. **测试模式**: 系统默认使用Testnet模式，资金为虚拟资金 (推荐)
+2. **永久运行**: 使用 `999999` 小时参数实现永久运行，或使用监控脚本
+3. **API配置**: 需要配置Testnet API Key（从 [testnet.binance.vision](https://testnet.binance.vision) 获取）
+4. **监控工具**: 推荐使用 `./scripts/check_trading.sh` 和 `./scripts/monitor_trading.sh`
+5. **文件位置**: CLAUDE.md 必须在项目根目录（遵循规范）
+6. **数据安全**: 请勿将 `.env` 文件提交到版本控制
+7. **网络限制**: Demo Trading API在当前网络环境下可能不可达
 
 ## 📊 性能监控
 
 ### 当前运行状态
 ```bash
+# 快速状态检查 (推荐)
+./scripts/check_trading.sh
+
 # 查看系统状态
+./start_nof1.sh status
 python3 nof1.py --status
 
 # 查看性能摘要
