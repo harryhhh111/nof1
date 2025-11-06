@@ -34,6 +34,116 @@ WebFetch(url="...", prompt="Extract technical details about base URL, authentica
    - Use community documentation
    - Check CCXT library documentation for integration examples
 
+## 🔧 交易模块抽象（工厂模式）
+
+### 概述
+
+系统现在使用抽象工厂模式来支持多种交易模式，可以轻松切换不同的交易环境而无需修改业务逻辑。
+
+### 支持的交易模式
+
+| 模式 | 类型 | 描述 | 风险级别 |
+|------|------|------|----------|
+| **paper** | 纸交易 | 纯模拟交易，不调用真实API | 🟢 无风险 |
+| **testnet** | Testnet | Binance Testnet API (testnet.binance.vision) | 🟢 无风险 |
+| **demo** | Demo Trading | Binance Demo Trading API (demo-api.binance.com) | 🟢 无风险 |
+| **live** | 实盘 | 真实Binance API | 🔴 高风险 |
+
+### 交易工厂使用
+
+```python
+from trading.trading_factory import TradingFactory
+from models.trading_decision import TradingDecision
+
+# 1. 创建交易器（自动根据配置选择模式）
+trader = TradingFactory.create_trader()
+
+# 2. 或指定特定模式
+paper_trader = TradingFactory.create_trader('paper')
+testnet_trader = TradingFactory.create_trader('testnet')
+demo_trader = TradingFactory.create_trader('demo')
+live_trader = TradingFactory.create_trader('live')
+
+# 3. 使用统一的接口
+balance = trader.get_account_balance()
+price = trader.get_symbol_price('BTCUSDT')
+
+# 4. 下订单
+result = trader.place_market_order('BTCUSDT', 'buy', 0.001, "买入测试")
+
+# 5. 执行交易决策
+decision = TradingDecision(
+    action="BUY",
+    confidence=75.0,
+    entry_price=price,
+    stop_loss=price * 0.95,
+    take_profit=price * 1.10,
+    position_size=5.0,
+    risk_level="MEDIUM",
+    reasoning="测试决策",
+    timeframe="4h",
+    symbol="BTCUSDT"
+)
+
+result = trader.execute_decision(decision)
+
+# 6. 清理资源
+trader.close()
+```
+
+### 核心类
+
+- **`TradingInterface`**: 抽象交易接口，定义所有交易器必须实现的方法
+- **`TradingFactory`**: 工厂类，根据配置创建对应的交易器实例
+- **`TestnetTrader`**: Testnet交易器实现
+- **`DemoTrader`**: Demo Trading交易器实现
+- **`PaperTraderImpl`**: 纸交易模拟器实现
+
+### 模式切换
+
+只需修改配置即可切换交易模式：
+
+```python
+# 在 config.py 中
+USE_TESTNET = True  # 使用 testnet
+CURRENT_MODE = 'testnet'
+
+# 或
+USE_TESTNET = False  # 使用 demo 或 live
+CURRENT_MODE = 'demo'  # 或 'paper' 或 'live'
+```
+
+### 优劣势对比
+
+#### Paper Trading
+- ✅ 无需API Key
+- ✅ 无网络依赖
+- ✅ 快速测试
+- ❌ 价格可能有延迟
+- ❌ 无法测试真实网络情况
+
+#### Testnet Trading
+- ✅ 真实API调用
+- ✅ 虚拟资金
+- ✅ 完整交易功能
+- ❌ 需要配置API Key
+- ❌ 可能受网络限制
+
+#### Demo Trading
+- ✅ 统一现货+期货环境
+- ✅ 初始资金充足
+- ❌ 当前网络不可达
+- ❌ 需要API Key
+
+### 测试脚本
+
+运行交易工厂测试：
+```bash
+python3 tests/demo_trading/test_trading_factory.py
+```
+
+这将测试所有交易模式并显示性能摘要。
+
 ## Project Overview
 
 This is a **comprehensive LLM-powered cryptocurrency trading system** that combines market data analysis with AI-driven decision making. The system implements a multi-phase architecture with parallel LLM processing (DeepSeek + Qwen3), risk management, backtesting, and real-time performance monitoring.
