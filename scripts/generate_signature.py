@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 """
 生成 Binance API 签名
+
+# Add parent directory to path to import modules
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from database import Database
+
 用于 Postman 测试
 """
 
 import hmac
 import hashlib
 import time
-import sys
-import os
 
 # 从环境变量或直接设置
 try:

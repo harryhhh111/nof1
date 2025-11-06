@@ -10,9 +10,11 @@ import os
 import sqlite3
 from datetime import datetime
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add parent directory to path to import modules
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from database import Database
+
 
 def quick_query(query_type="all"):
     """快速查询"""

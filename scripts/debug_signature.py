@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 """
 调试 Binance API 签名生成问题
+
+# Add parent directory to path to import modules
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from database import Database
+
 """
 
 import hmac

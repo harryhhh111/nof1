@@ -10,9 +10,10 @@ import os
 import sqlite3
 from datetime import datetime
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from database import Database
+
 
 def print_separator(title=""):
     """打印分隔线"""

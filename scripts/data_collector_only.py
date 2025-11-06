@@ -21,10 +21,11 @@ from datetime import datetime
 from typing import List, Optional
 
 # 添加项目根目录
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from database import Database
 
 from data_fetcher import DataFetcher
-from database import Database
 from config import SYMBOLS, UPDATE_INTERVAL, LOG_LEVEL, LOG_FORMAT
 
 # 配置日志

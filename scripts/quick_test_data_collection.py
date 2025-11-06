@@ -11,10 +11,11 @@ import logging
 from datetime import datetime
 
 # 添加项目根目录
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from database import Database
 
 from data_fetcher import DataFetcher
-from database import Database
 
 # 配置日志
 logging.basicConfig(

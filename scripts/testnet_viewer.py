@@ -11,7 +11,9 @@ from datetime import datetime
 from decimal import Decimal
 
 # 添加项目根目录
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from database import Database
 
 from trading.real_trader import RealTrader
 

@@ -12,9 +12,10 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from database import Database
+
 
 def create_sample_data():
     """创建示例数据"""
