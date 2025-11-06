@@ -91,22 +91,22 @@ CREATE TABLE perpetual_data (
 
 ```bash
 # 查看数据库概览
-python3 quick_query.py summary
+python3 scripts/quick_query.py summary
 
 # 查看最新技术指标
-python3 quick_query.py indicators
+python3 scripts/quick_query.py indicators
 
 # 查看K线数据
-python3 quick_query.py klines
+python3 scripts/quick_query.py klines
 
 # 查看永续合约数据
-python3 quick_query.py perp
+python3 scripts/quick_query.py perp
 
 # 查看所有交易对
-python3 quick_query.py symbols
+python3 scripts/quick_query.py symbols
 
 # 查看最新数据
-python3 quick_query.py latest
+python3 scripts/quick_query.py latest
 ```
 
 ### 2. view_database.py - 交互式浏览器
@@ -302,7 +302,7 @@ WHERE timestamp < (strftime('%s', 'now') - 90*24*3600) * 1000;
 
 ```bash
 # 使用quick_query查看概览
-python3 quick_query.py summary
+python3 scripts/quick_query.py summary
 ```
 
 输出示例：

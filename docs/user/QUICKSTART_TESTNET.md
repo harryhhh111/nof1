@@ -189,7 +189,7 @@ python3 nof1.py --view
 python3 testnet_viewer.py
 
 # 方式3: 数据库查询
-python3 quick_query.py summary
+python3 scripts/quick_query.py summary
 ```
 
 ### 3. 访问Web界面
@@ -464,13 +464,13 @@ python3 testnet_demo.py
 ### 2. 快速查询数据
 ```bash
 # 数据库概览
-python3 quick_query.py summary
+python3 scripts/quick_query.py summary
 
 # 最新技术指标
-python3 quick_query.py indicators
+python3 scripts/quick_query.py indicators
 
 # K线数据
-python3 quick_query.py klines
+python3 scripts/quick_query.py klines
 ```
 
 ### 3. 交互式浏览

@@ -164,13 +164,13 @@ python main.py --status
 ### 示例 5：数据库查看（新增）
 ```bash
 # 快速查看数据库摘要
-python3 quick_query.py summary
+python3 scripts/quick_query.py summary
 
 # 查看技术指标
-python3 quick_query.py indicators
+python3 scripts/quick_query.py indicators
 
 # 查看 K 线数据
-python3 quick_query.py klines
+python3 scripts/quick_query.py klines
 
 # 交互式数据库浏览器
 python3 view_database.py

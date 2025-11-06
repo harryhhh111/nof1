@@ -143,13 +143,13 @@ python main.py --query --symbols BTCUSDT
 ### 第七步：查看数据库（新增）
 ```bash
 # 快速查看数据库摘要
-python3 quick_query.py summary
+python3 scripts/quick_query.py summary
 
 # 查看技术指标
-python3 quick_query.py indicators
+python3 scripts/quick_query.py indicators
 
 # 查看 K 线数据
-python3 quick_query.py klines
+python3 scripts/quick_query.py klines
 
 # 交互式数据库浏览器
 python3 view_database.py
@@ -319,16 +319,16 @@ python main.py --status
 **方式 1：快速查询工具**
 ```bash
 # 查看数据库摘要
-python3 quick_query.py summary
+python3 scripts/quick_query.py summary
 
 # 查看技术指标
-python3 quick_query.py indicators
+python3 scripts/quick_query.py indicators
 
 # 查看 K 线数据
-python3 quick_query.py klines
+python3 scripts/quick_query.py klines
 
 # 查看永续合约数据
-python3 quick_query.py perp
+python3 scripts/quick_query.py perp
 ```
 
 **方式 2：交互式查看器**

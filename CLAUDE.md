@@ -275,12 +275,12 @@ curl http://localhost:8000/api/v1/stats/summary
 
 **Quick Query:**
 ```bash
-python3 quick_query.py summary      # Database overview
-python3 quick_query.py latest       # Latest data
-python3 quick_query.py indicators   # Technical indicators
-python3 quick_query.py klines       # K-line data
-python3 quick_query.py perp         # Perpetual futures data
-python3 quick_query.py symbols      # All trading symbols
+python3 scripts/quick_query.py summary      # Database overview
+python3 scripts/quick_query.py latest       # Latest data
+python3 scripts/quick_query.py indicators   # Technical indicators
+python3 scripts/quick_query.py klines       # K-line data
+python3 scripts/quick_query.py perp         # Perpetual futures data
+python3 scripts/quick_query.py symbols      # All trading symbols
 ```
 
 **Interactive Viewer:**
@@ -400,7 +400,7 @@ The system follows a modular architecture:
 
 | Tool | Purpose | Usage |
 |------|---------|-------|
-| **quick_query.py** | Quick database queries | `python3 quick_query.py [summary/latest/indicators/klines/perp/symbols]` |
+| **quick_query.py** | Quick database queries | `python3 scripts/quick_query.py [summary/latest/indicators/klines/perp/symbols]` |
 | **view_database.py** | Interactive browser | `python3 view_database.py` |
 | **demo_database.py** | Demo & examples | `python3 demo_database.py` |
 
@@ -489,10 +489,10 @@ The SQLite database (`market_data.db`) contains 4 main tables:
 **Using quick_query.py:**
 ```bash
 # View database summary
-python3 quick_query.py summary
+python3 scripts/quick_query.py summary
 
 # View latest technical indicators
-python3 quick_query.py indicators
+python3 scripts/quick_query.py indicators
 ```
 
 **Using view_database.py (interactive):**
@@ -880,9 +880,9 @@ Use the `Database` class methods:
 ### Querying Database
 For quick queries, use `quick_query.py`:
 ```bash
-python3 quick_query.py latest    # Latest records from all tables
-python3 quick_query.py klines    # K-line data
-python3 quick_query.py indicators # Technical indicators
+python3 scripts/quick_query.py latest    # Latest records from all tables
+python3 scripts/quick_query.py klines    # K-line data
+python3 scripts/quick_query.py indicators # Technical indicators
 ```
 
 For interactive exploration, use `view_database.py`:
