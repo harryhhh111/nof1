@@ -43,6 +43,9 @@ class DataFetcher:
                 'type': 'spot'  # 现货交易
             })
 
+        # ✅ 使用testnet.binance.vision（Demo Trading端点不可访问）
+        # Note: Demo Trading (demo-api.binance.com) 在当前环境中无法访问
+
         self.db = Database(db_path) if db_path else Database()
         self.ti = TechnicalIndicators()
         self.use_testnet = config.USE_TESTNET

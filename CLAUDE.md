@@ -2,6 +2,38 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🔒 Handling Access Restrictions
+
+### When Websites Block Direct Access
+
+Some websites (especially financial/exchange platforms like Binance) actively block automated requests from unknown sources. If direct `WebFetch` fails:
+
+**Error Example:**
+```
+Claude Code is unable to fetch from https://developers.binance.com/...
+```
+
+**Solutions:**
+
+1. **Use MCP Web Fetch Tool** (Recommended for Binance/exchange documentation)
+```python
+# Search for the documentation first
+mcp__web_search.search_query = "binance demo trading API documentation site:binance.com"
+
+# Then fetch specific pages
+WebFetch(url="...", prompt="Extract technical details about base URL, authentication, and configuration")
+```
+
+2. **Alternative Access Methods**
+   - Use search engines to find cached versions
+   - Look for mirror sites or GitHub mirrors
+   - Access via alternative search indices
+
+3. **For Binance Specifically**
+   - Use GitHub mirrors: https://github.com/binance/binance-spot-api-docs
+   - Use community documentation
+   - Check CCXT library documentation for integration examples
+
 ## Project Overview
 
 This is a **comprehensive LLM-powered cryptocurrency trading system** that combines market data analysis with AI-driven decision making. The system implements a multi-phase architecture with parallel LLM processing (DeepSeek + Qwen3), risk management, backtesting, and real-time performance monitoring.

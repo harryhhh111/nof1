@@ -97,6 +97,9 @@ class RealTrader:
             })
             mode_name = f"{config.CURRENT_MODE.upper()} (Spot)"
 
+        # ✅ 使用testnet.binance.vision（Demo Trading端点不可访问）
+        # Note: Demo Trading (demo-api.binance.com) 在当前环境中无法访问
+
         # 验证API Key
         if not config.BINANCE_API_KEY or not config.BINANCE_SECRET_KEY:
             error_msg = f"未配置API Key！请检查config.py中的配置"

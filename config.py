@@ -80,43 +80,41 @@ TESTNET_API_KEY = os.getenv("TESTNET_API_KEY", "")
 TESTNET_SECRET_KEY = os.getenv("TESTNET_SECRET_KEY", "")
 
 # 根据模式选择配置
-if USE_TESTNET:
-    # 优先使用新的 Demo Trading API
-    if DEMO_API_KEY and DEMO_SECRET_KEY:
-        BINANCE_API_KEY = DEMO_API_KEY
-        BINANCE_SECRET_KEY = DEMO_SECRET_KEY
-        # 注意: 新 Demo Trading (demo.binance.com) 可能没有公开 API
-        # 当前使用 testnet.binance.vision 作为备用方案
-        BINANCE_BASE_URL = "https://testnet.binance.vision"
-        BINANCE_FUTURES_URL = "https://testnet.binancefuture.com"
-        TRADING_MODE_NAME = "Demo Trading (New)"
-        print(f"⚠️  注意: demo.binance.com 可能没有公开 API")
-        print(f"   当前使用 testnet.binance.vision 作为备用")
-    elif TESTNET_API_KEY and TESTNET_SECRET_KEY:
-        BINANCE_API_KEY = TESTNET_API_KEY
-        BINANCE_SECRET_KEY = TESTNET_SECRET_KEY
-        BINANCE_BASE_URL = "https://testnet.binance.vision"
-        BINANCE_FUTURES_URL = "https://testnet.binancefuture.com"
-        TRADING_MODE_NAME = "Testnet (Legacy)"
-        print(f"⚠️  使用旧的 Testnet API（建议升级到 Demo Trading）")
-    else:
-        BINANCE_API_KEY = BINANCE_API_KEY
-        BINANCE_SECRET_KEY = BINANCE_SECRET_KEY
+# ✅ 优先使用新的 Demo Trading API（使用demo-api.binance.com端点）
+if DEMO_API_KEY and DEMO_SECRET_KEY:
+    BINANCE_API_KEY = DEMO_API_KEY
+    BINANCE_SECRET_KEY = DEMO_SECRET_KEY
+    # ✅ 新 Demo Trading 使用专门的demo端点
+    BINANCE_BASE_URL = "https://demo-api.binance.com"
+    BINANCE_FUTURES_URL = "https://demo-fapi.binance.com"
+    TRADING_MODE_NAME = "Demo Trading (New)"
+    print(f"✅ 使用新的 Demo Trading API (demo-api.binance.com)")
+elif TESTNET_API_KEY and TESTNET_SECRET_KEY:
+    BINANCE_API_KEY = TESTNET_API_KEY
+    BINANCE_SECRET_KEY = TESTNET_SECRET_KEY
+    BINANCE_BASE_URL = "https://testnet.binance.vision"
+    BINANCE_FUTURES_URL = "https://testnet.binancefuture.com"
+    TRADING_MODE_NAME = "Testnet (Legacy)"
+    print(f"⚠️  使用旧的 Testnet API（建议升级到 Demo Trading）")
+else:
+    BINANCE_API_KEY = BINANCE_API_KEY
+    BINANCE_SECRET_KEY = BINANCE_SECRET_KEY
+    if USE_TESTNET:
         BINANCE_BASE_URL = "https://testnet.binance.vision"
         BINANCE_FUTURES_URL = "https://testnet.binancefuture.com"
         TRADING_MODE_NAME = "Testnet (Default)"
         print(f"⚠️  未配置 API Key，使用默认 Testnet")
-else:
-    BINANCE_BASE_URL = "https://api.binance.com"
-    BINANCE_FUTURES_URL = "https://fapi.binance.com"
-    TRADING_MODE_NAME = "Live Trading"
-    print(f"⚠️  LIVE TRADING - 使用真实资金！")
+    else:
+        BINANCE_BASE_URL = "https://api.binance.com"
+        BINANCE_FUTURES_URL = "https://fapi.binance.com"
+        TRADING_MODE_NAME = "API Trading"
+        print(f"⚠️  使用真实 API 端点")
 
 # 交易所配置
 EXCHANGE_CONFIG = {
     'apiKey': BINANCE_API_KEY,
     'secret': BINANCE_SECRET_KEY,
-    'sandbox': USE_TESTNET,  # 关键：启用/禁用沙盒模式
+    'sandbox': USE_TESTNET,  # ✅ 使用testnet.binance.vision
     'enableRateLimit': True,
     'baseUrl': BINANCE_BASE_URL if USE_TESTNET else None,
     'options': {
@@ -128,7 +126,7 @@ EXCHANGE_CONFIG = {
 FUTURES_CONFIG = {
     'apiKey': BINANCE_API_KEY,
     'secret': BINANCE_SECRET_KEY,
-    'sandbox': USE_TESTNET,
+    'sandbox': USE_TESTNET,  # 使用testnet.binance.vision
     'enableRateLimit': True,
     'baseUrl': BINANCE_FUTURES_URL if USE_TESTNET else None,
     'options': {

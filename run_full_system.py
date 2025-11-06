@@ -171,7 +171,7 @@ class FullSystem:
                 )
 
                 # 3. 获取性能摘要
-                summary = self.monitor.get_performance_summary(self.paper_trader)
+                summary = self.monitor.get_performance_summary(self.real_trader)
 
                 logger.info(f"📊 性能摘要:")
                 logger.info(f"   总交易: {summary.total_trades}")
