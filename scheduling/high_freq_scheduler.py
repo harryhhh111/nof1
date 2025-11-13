@@ -2,6 +2,11 @@
 高频决策调度器
 
 实现每5分钟的自动交易决策系统
+
+重要原则：
+- 一个账户只使用一个LLM进行决策
+- 多个LLM用于多账户对比测试（相同prompt，不同LLM，对比效果）
+- 不在单个决策过程中融合多个LLM的输出
 """
 
 import asyncio
@@ -18,6 +23,7 @@ from llm_clients.llm_factory import LLMClientFactory
 from trading.paper_trader import PaperTrader
 from models.trading_decision import TradingDecision
 from scheduling.decision_cache import DecisionCache, MultiLevelCache
+from config import ACCOUNT_CONFIGS, LLM_MODEL_PRIORITY
 
 logger = logging.getLogger(__name__)
 
@@ -28,10 +34,14 @@ class HighFreqScheduler:
 
     功能：
     - 每5分钟执行一次决策
-    - 并行调用多个LLM
-    - 融合长期和短期决策
+    - 每个交易对使用单一LLM进行决策
+    - 支持多账户对比测试（不同LLM，相同prompt）
     - 自动执行纸交易
     - 智能缓存降低成本
+
+    重要原则：
+    - 一个账户只使用一个LLM
+    - 多个LLM用于多账户对比，而非单个决策融合
     """
 
     def __init__(
@@ -40,7 +50,8 @@ class HighFreqScheduler:
         llm_factory: LLMClientFactory,
         paper_trader: PaperTrader,
         interval_seconds: int = 300,
-        cache_ttl: int = 600
+        cache_ttl: int = 600,
+        account_configs: Optional[Dict] = None
     ):
         """
         初始化高频调度器
@@ -51,12 +62,14 @@ class HighFreqScheduler:
             paper_trader: 纸交易执行器
             interval_seconds: 执行间隔（秒），默认300秒（5分钟）
             cache_ttl: 缓存生存时间（秒），默认600秒（10分钟）
+            account_configs: 账户配置，指定每个交易对使用的LLM
         """
         self.symbols = symbols
         self.llm_factory = llm_factory
         self.paper_trader = paper_trader
         self.interval_seconds = interval_seconds
         self.is_running = False
+        self.account_configs = account_configs or ACCOUNT_CONFIGS
 
         # 初始化组件
         self.processor = MultiTimeframeProcessor()
@@ -66,6 +79,12 @@ class HighFreqScheduler:
             'default': 600, # 10分钟默认缓存
             'slow': 900     # 15分钟慢速缓存
         })
+
+        # 构建交易对到LLM的映射
+        self.symbol_to_llm = self._build_symbol_llm_mapping()
+
+        # 验证映射
+        self._validate_symbol_llm_mapping()
 
         # 统计数据
         self.stats = {
@@ -148,6 +167,9 @@ class HighFreqScheduler:
         """
         处理单个交易对
 
+        重要原则：每个交易对只使用一个LLM进行决策
+        不再融合多个LLM的输出
+
         Args:
             symbol: 交易对
 
@@ -164,7 +186,8 @@ class HighFreqScheduler:
                 '4h': data_4h.get('trend', {}).get('direction'),
                 '3m': data_3m.get('momentum', {}).get('momentum_direction'),
                 'price_4h': data_4h.get('current_price'),
-                'price_3m': data_3m.get('current_price')
+                'price_3m': data_3m.get('current_price'),
+                'llm': self.symbol_to_llm.get(symbol, 'default')  # 包含LLM信息到缓存键
             }
 
             if self.cache.is_valid(symbol, cache_key_data):
@@ -176,24 +199,21 @@ class HighFreqScheduler:
                 await self._execute_decision(symbol, cached_decision)
                 return "cache_hit"
 
-            # 3. 生成提示
-            logger.info(f"正在为 {symbol} 生成提示...")
-            prompt_4h = self.prompt_generator.generate_4h_prompt(data_4h, data_3m)
-            prompt_3m = self.prompt_generator.generate_3m_prompt(data_3m)
+            # 3. 生成综合提示（长期+短期）
+            logger.info(f"正在为 {symbol} 生成综合分析提示...")
+            prompt = self._get_prompt_for_symbol(symbol, data_4h, data_3m)
 
-            # 4. 并行调用LLM
-            logger.info(f"正在并行调用LLM分析 {symbol}...")
-            decisions = await self._parallel_llm_call(symbol, prompt_4h, prompt_3m)
+            # 4. 调用单一LLM进行决策
+            llm_model = self.symbol_to_llm[symbol]
+            logger.info(f"正在使用 {llm_model} 分析 {symbol}...")
+            decision = await self._single_llm_call(symbol, llm_model, prompt)
 
-            # 5. 融合决策
-            final_decision = self._fuse_decisions(decisions, data_4h, data_3m)
-
-            # 6. 缓存决策
-            self.cache.set(symbol, cache_key_data, final_decision)
+            # 5. 缓存决策
+            self.cache.set(symbol, cache_key_data, decision)
             self.stats['cache_misses'] += 1
 
-            # 7. 执行决策
-            await self._execute_decision(symbol, final_decision)
+            # 6. 执行决策
+            await self._execute_decision(symbol, decision)
 
             self.stats['successful_decisions'] += 1
             return "success"
@@ -231,65 +251,79 @@ class HighFreqScheduler:
 
         return data_4h, data_3m
 
-    async def _parallel_llm_call(
+    async def _single_llm_call(
         self,
         symbol: str,
-        prompt_4h: str,
-        prompt_3m: str
-    ) -> List[Tuple[TradingDecision, Any]]:
+        llm_model: str,
+        prompt: str
+    ) -> TradingDecision:
         """
-        并行调用多个LLM
+        调用单一LLM进行决策
+
+        重要原则：每个交易对只使用一个LLM
+        多个LLM用于多账户对比测试，而非单个决策融合
 
         Args:
             symbol: 交易对
-            prompt_4h: 4小时提示
-            prompt_3m: 3分钟提示
+            llm_model: LLM模型名称
+            prompt: 综合分析提示
 
         Returns:
-            [(决策, 元数据), ...]
+            交易决策
         """
-        # 简化版本：顺序调用两个模型
-        # 生产环境中可以改为真正的异步并行
-        results = []
+        # 检查LLM模型是否可用
+        available_models = self.llm_factory.list_available_models()
 
-        # DeepSeek - 长期分析
+        if llm_model not in available_models:
+            logger.warning(f"LLM模型 '{llm_model}' 不可用，尝试使用备选模型...")
+            # 使用优先级列表中的第一个可用模型
+            for fallback_model in LLM_MODEL_PRIORITY:
+                if fallback_model in available_models:
+                    llm_model = fallback_model
+                    logger.info(f"使用备选LLM模型: {llm_model}")
+                    break
+            else:
+                raise Exception(f"没有可用的LLM模型")
+
         try:
-            if 'deepseek' in self.llm_factory.list_available_models():
-                logger.info(f"调用 DeepSeek 分析 {symbol}...")
-                decision_4h, metadata_4h = self.llm_factory.call_model(
-                    'deepseek',
-                    prompt_4h,
-                    temperature=0.3,
-                    max_tokens=1500
-                )
-                decision_4h.symbol = symbol
-                decision_4h.timeframe = "4h"
-                results.append((decision_4h, metadata_4h))
-                self.stats['total_cost'] += metadata_4h.cost or 0
+            # 调用指定的LLM
+            logger.info(f"使用 {llm_model} 分析 {symbol}...")
+            decision, metadata = self.llm_factory.call_model(
+                llm_model,
+                prompt,
+                temperature=0.3,
+                max_tokens=1500
+            )
+
+            # 设置决策属性
+            decision.symbol = symbol
+            decision.timeframe = "combined"
+            decision.model_source = llm_model
+
+            # 更新成本统计
+            self.stats['total_cost'] += metadata.cost or 0
+
+            logger.info(
+                f"{symbol} 决策完成: {decision.action} "
+                f"(置信度: {decision.confidence}%, LLM: {llm_model})"
+            )
+
+            return decision
+
         except Exception as e:
-            logger.error(f"DeepSeek 调用失败: {e}")
-
-        # Qwen - 短期分析
-        try:
-            if 'qwen' in self.llm_factory.list_available_models():
-                logger.info(f"调用 Qwen 分析 {symbol}...")
-                decision_3m, metadata_3m = self.llm_factory.call_model(
-                    'qwen',
-                    prompt_3m,
-                    temperature=0.3,
-                    max_tokens=1500
-                )
-                decision_3m.symbol = symbol
-                decision_3m.timeframe = "3m"
-                results.append((decision_3m, metadata_3m))
-                self.stats['total_cost'] += metadata_3m.cost or 0
-        except Exception as e:
-            logger.error(f"Qwen 调用失败: {e}")
-
-        if not results:
-            raise Exception("所有LLM调用都失败")
-
-        return results
+            logger.error(f"LLM调用失败 ({llm_model}): {e}")
+            # 返回默认HOLD决策
+            return TradingDecision(
+                action="HOLD",
+                confidence=50,
+                reasoning=f"LLM调用失败: {e}",
+                position_size=0,
+                risk_level="MEDIUM",
+                risk_score=50,
+                model_source=f"error_{llm_model}",
+                timeframe="error",
+                symbol=symbol
+            )
 
     def _fuse_decisions(
         self,
@@ -298,7 +332,12 @@ class HighFreqScheduler:
         data_3m: Dict
     ) -> TradingDecision:
         """
-        融合多个决策
+        融合多个决策（仅在多账户对比测试时使用）
+
+        重要说明：
+        - 当前设计中，每个交易对只使用一个LLM
+        - 此方法主要用于多账户对比测试场景（相同prompt，不同LLM）
+        - 常规交易决策不再需要此方法
 
         Args:
             decisions: 决策列表
@@ -324,11 +363,15 @@ class HighFreqScheduler:
         if len(decisions) == 1:
             # 只有一个决策，直接返回
             decision, metadata = decisions[0]
-            decision.fusion_summary = "单一模型决策"
+            decision.fusion_summary = "单一LLM决策（非融合）"
             decision.consensus_score = 100.0
+            logger.info("⚠️  注意：只有一个决策，未进行融合")
             return decision
 
-        # 多个决策融合
+        # 多个决策融合（多账户对比场景）
+        logger.warning(f"⚠️  检测到多个LLM决策进行融合 (共{len(decisions)}个)")
+        logger.warning("   建议：每个交易对应一个账户，一个账户使用一个LLM")
+
         decisions_only = [d[0] for d in decisions]
 
         # 统计各动作的置信度
@@ -350,22 +393,24 @@ class HighFreqScheduler:
         fused_decision = decisions_only[0].__class__(
             action=best_action,
             confidence=max_score / len(decisions_only),
-            reasoning=f"融合{len(decisions)}个决策: {action_scores}",
+            reasoning=f"⚠️ 多账户对比融合: {action_scores}",
             position_size=decisions_only[0].position_size,
             risk_level=decisions_only[0].risk_level,
             risk_score=decisions_only[0].risk_score,
-            model_source="fused",
+            model_source="multi_account_fusion",
             timeframe="fused",
             symbol=decisions_only[0].symbol,
-            fusion_summary=f"{len(decisions)}个模型融合",
+            fusion_summary=f"⚠️ {len(decisions)}个账户对比融合",
             consensus_score=consensus_score,
             execution_timing="立即执行" if consensus_score > 80 else "谨慎执行"
         )
 
-        # 添加长期和短期贡献度
-        if len(decisions_only) >= 2:
-            fused_decision.long_term_contribution = f"长期决策: {decisions_only[0].action} (置信度: {decisions_only[0].confidence})"
-            fused_decision.short_term_contribution = f"短期决策: {decisions_only[1].action} (置信度: {decisions_only[1].confidence})"
+        # 添加各账户贡献度
+        for i, decision in enumerate(decisions_only):
+            setattr(fused_decision, f'account_{i+1}_contribution',
+                   f"账户{i+1}: {decision.action} (置信度: {decision.confidence}, 模型: {decision.model_source})")
+
+        logger.warning(f"多账户融合完成: {best_action} (一致性: {consensus_score:.1f}%)")
 
         return fused_decision
 
@@ -434,6 +479,105 @@ class HighFreqScheduler:
         logger.info("正在停止高频决策调度器...")
         self.is_running = False
 
+    def _build_symbol_llm_mapping(self) -> Dict[str, str]:
+        """
+        构建交易对到LLM的映射
+
+        Returns:
+            {symbol: llm_model} 字典
+        """
+        mapping = {}
+
+        # 根据账户配置构建映射
+        for account_id, config in self.account_configs.items():
+            llm_model = config['llm_model']
+            symbols = config['symbols']
+
+            for symbol in symbols:
+                if symbol in self.symbols:
+                    mapping[symbol] = llm_model
+
+        # 对于未在配置中的交易对，使用默认LLM
+        for symbol in self.symbols:
+            if symbol not in mapping:
+                # 使用第一个可用的LLM
+                available_models = self.llm_factory.list_available_models()
+                if available_models:
+                    mapping[symbol] = available_models[0]
+                    logger.warning(f"交易对 {symbol} 未在账户配置中，使用默认LLM: {available_models[0]}")
+                else:
+                    raise ValueError("没有可用的LLM模型")
+
+        return mapping
+
+    def _validate_symbol_llm_mapping(self):
+        """验证交易对-LLM映射的合理性"""
+        logger.info("验证交易对-LLM映射...")
+
+        # 检查是否有重复的LLM分配给多个交易对
+        llm_to_symbols = {}
+        for symbol, llm in self.symbol_to_llm.items():
+            if llm not in llm_to_symbols:
+                llm_to_symbols[llm] = []
+            llm_to_symbols[llm].append(symbol)
+
+        # 打印映射信息
+        for llm, symbols in llm_to_symbols.items():
+            logger.info(f"LLM '{llm}' 负责交易对: {', '.join(symbols)}")
+
+        # 检查映射合理性
+        if len(self.symbol_to_llm) != len(self.symbols):
+            raise ValueError("存在未分配LLM的交易对")
+
+        logger.info(f"✅ 成功构建 {len(self.symbol_to_llm)} 个交易对的LLM映射")
+
+    def _get_prompt_for_symbol(self, symbol: str, data_4h: Dict, data_3m: Dict) -> str:
+        """
+        为指定交易对生成提示
+
+        重要：一个交易对只生成一个提示，由其配置的LLM处理
+        不再分别生成长期和短期提示
+
+        Args:
+            symbol: 交易对
+            data_4h: 4小时数据
+            data_3m: 3分钟数据
+
+        Returns:
+            综合提示字符串
+        """
+        prompt = f"""
+你是一个专业的加密货币量化交易员，基于多时间框架数据进行综合决策。
+
+当前分析交易对：{symbol}
+
+=== 4小时长期趋势分析 ===
+{data_4h.get('description', '无数据')}
+
+=== 3分钟短期背景 ===
+{data_3m.get('description', '无数据')}
+
+=== 交易任务 ===
+请综合长期趋势和短期时机，给出最终交易决策。
+
+请以JSON格式返回决策：
+{{
+  "action": "BUY|SELL|HOLD",
+  "confidence": 0-100,
+  "reasoning": "详细分析",
+  "entry_price": 价格,
+  "stop_loss": 价格,
+  "take_profit": 价格,
+  "position_size": 百分比,
+  "risk_level": "LOW|MEDIUM|HIGH",
+  "timeframe": "combined",
+  "trend_analysis": "长期趋势分析",
+  "timing_analysis": "短期时机分析",
+  "key_factors": ["关键因素1", "关键因素2"]
+}}
+"""
+        return prompt
+
     def cleanup(self):
         """清理资源"""
         logger.info("正在清理资源...")
@@ -463,24 +607,117 @@ class DecisionScheduler:
     决策调度器（简化版）
 
     单次决策执行器
+    重要：每个交易对只使用一个LLM进行决策
+
+    注意：此为简化版本，适用于单交易对场景
+    多交易对场景请使用 HighFreqScheduler
     """
 
     def __init__(
         self,
         symbol: str,
         llm_factory: LLMClientFactory,
-        paper_trader: PaperTrader
+        paper_trader: PaperTrader,
+        llm_model: Optional[str] = None,
+        account_configs: Optional[Dict] = None
     ):
         self.symbol = symbol
         self.llm_factory = llm_factory
         self.paper_trader = paper_trader
+        self.account_configs = account_configs or ACCOUNT_CONFIGS
         self.processor = MultiTimeframeProcessor()
-        self.prompt_generator = PromptGenerator()
         self.cache = DecisionCache(ttl_seconds=600)
+
+        # 选择LLM模型
+        self.llm_model = self._select_llm_model(llm_model)
+
+    def _select_llm_model(self, preferred_model: Optional[str] = None) -> str:
+        """
+        为当前交易对选择LLM模型
+
+        优先级：
+        1. 用户指定的模型（llm_model参数）
+        2. 账户配置中指定的模型
+        3. 第一个可用模型
+
+        Args:
+            preferred_model: 用户首选的LLM模型
+
+        Returns:
+            选定的LLM模型名称
+        """
+        available_models = self.llm_factory.list_available_models()
+
+        # 1. 使用用户指定的模型
+        if preferred_model and preferred_model in available_models:
+            logger.info(f"使用用户指定的LLM模型: {preferred_model}")
+            return preferred_model
+
+        # 2. 从账户配置中查找
+        for account_id, config in self.account_configs.items():
+            if self.symbol in config['symbols']:
+                llm_model = config['llm_model']
+                if llm_model in available_models:
+                    logger.info(f"从账户配置选择LLM模型: {llm_model}")
+                    return llm_model
+
+        # 3. 使用第一个可用模型
+        if available_models:
+            logger.warning(f"使用默认LLM模型: {available_models[0]}")
+            return available_models[0]
+
+        raise ValueError("没有可用的LLM模型")
+
+    def _get_comprehensive_prompt(self, data_4h: Dict, data_3m: Dict) -> str:
+        """
+        生成综合提示（长期+短期）
+
+        Args:
+            data_4h: 4小时数据
+            data_3m: 3分钟数据
+
+        Returns:
+            综合提示字符串
+        """
+        prompt = f"""
+你是一个专业的加密货币量化交易员，基于多时间框架数据进行综合决策。
+
+当前分析交易对：{self.symbol}
+使用LLM模型：{self.llm_model}
+
+=== 4小时长期趋势分析 ===
+{data_4h.get('description', '无数据')}
+
+=== 3分钟短期背景 ===
+{data_3m.get('description', '无数据')}
+
+=== 交易任务 ===
+请综合长期趋势和短期时机，给出最终交易决策。
+
+请以JSON格式返回决策：
+{{
+  "action": "BUY|SELL|HOLD",
+  "confidence": 0-100,
+  "reasoning": "详细分析",
+  "entry_price": 价格,
+  "stop_loss": 价格,
+  "take_profit": 价格,
+  "position_size": 百分比,
+  "risk_level": "LOW|MEDIUM|HIGH",
+  "timeframe": "combined",
+  "trend_analysis": "长期趋势分析",
+  "timing_analysis": "短期时机分析",
+  "key_factors": ["关键因素1", "关键因素2"]
+}}
+"""
+        return prompt
 
     async def make_decision(self) -> TradingDecision:
         """
         执行单次决策
+
+        重要：只使用一个LLM进行决策
+        不再融合多个LLM的输出
 
         Returns:
             交易决策
@@ -492,26 +729,38 @@ class DecisionScheduler:
             data_3m = await loop.run_in_executor(None, self.processor.process_3m_data, self.symbol)
 
             # 检查缓存
-            cache_data = {'price_4h': data_4h.get('current_price'), 'price_3m': data_3m.get('current_price')}
+            cache_data = {
+                'price_4h': data_4h.get('current_price'),
+                'price_3m': data_3m.get('current_price'),
+                'llm': self.llm_model  # 包含LLM到缓存键
+            }
             cached = self.cache.get(self.symbol, cache_data)
             if cached:
                 return cached[0]
 
-            # 生成提示
-            prompt_4h = self.prompt_generator.generate_4h_prompt(data_4h, data_3m)
-            prompt_3m = self.prompt_generator.generate_3m_prompt(data_3m)
+            # 生成综合提示
+            prompt = self._get_comprehensive_prompt(data_4h, data_3m)
 
-            # 调用LLM（简化版本）
-            decision_4h, _ = self.llm_factory.call_model('deepseek', prompt_4h)
-            decision_3m, _ = self.llm_factory.call_model('qwen', prompt_3m)
+            # 调用单一LLM
+            decision, metadata = self.llm_factory.call_model(
+                self.llm_model,
+                prompt,
+                temperature=0.3,
+                max_tokens=1500
+            )
 
-            # 融合决策
-            fused = self._simple_fusion([decision_4h, decision_3m], data_4h, data_3m)
+            # 设置决策属性
+            decision.symbol = self.symbol
+            decision.timeframe = "combined"
+            decision.model_source = self.llm_model
 
             # 缓存
-            self.cache.set(self.symbol, cache_data, fused)
+            self.cache.set(self.symbol, cache_data, decision)
 
-            return fused
+            logger.info(f"{self.symbol} 决策完成: {decision.action} "
+                       f"(置信度: {decision.confidence}%, LLM: {self.llm_model})")
+
+            return decision
 
         except Exception as e:
             logger.error(f"决策失败: {e}")
@@ -523,25 +772,7 @@ class DecisionScheduler:
                 position_size=0,
                 risk_level="MEDIUM",
                 risk_score=50,
-                model_source="error",
-                timeframe="error"
+                model_source=f"error_{self.llm_model}",
+                timeframe="error",
+                symbol=self.symbol
             )
-
-    def _simple_fusion(
-        self,
-        decisions: List[TradingDecision],
-        data_4h: Dict,
-        data_3m: Dict
-    ) -> TradingDecision:
-        """简化融合"""
-        if not decisions:
-            raise ValueError("没有决策")
-
-        # 如果只有一个决策
-        if len(decisions) == 1:
-            return decisions[0]
-
-        # 多个决策，取置信度最高者
-        best = max(decisions, key=lambda d: d.confidence)
-        best.fusion_summary = f"从{len(decisions)}个决策中选择置信度最高者"
-        return best

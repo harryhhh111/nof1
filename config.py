@@ -170,3 +170,33 @@ print(f"""
 # 日志配置
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# ===== 账户和LLM映射配置 =====
+# 重要：一个账户应该只使用一个LLM进行决策
+# 多个LLM用于多账户对比测试，而非单个决策过程
+
+# 账户配置（每个账户使用一个LLM）
+# 格式: {account_id: {'llm_model': '模型名', 'symbols': ['交易对1', '交易对2'], 'description': '描述'}}
+ACCOUNT_CONFIGS = {
+    'account_deepseek': {
+        'llm_model': 'deepseek',
+        'symbols': ['BTCUSDT', 'ETHUSDT'],
+        'description': '使用 DeepSeek 进行长期趋势分析'
+    },
+    'account_qwen': {
+        'llm_model': 'qwen',
+        'symbols': ['SOLUSDT', 'BNBUSDT'],
+        'description': '使用 Qwen 进行短期动量分析'
+    }
+}
+
+# LLM模型优先级（当某个模型不可用时的备选）
+LLM_MODEL_PRIORITY = ['deepseek', 'qwen']
+
+# 多账户对比模式配置
+# 当设置为True时，启用多账户对比功能（相同prompt，不同LLM，对比效果）
+MULTI_ACCOUNT_COMPARISON = {
+    'enabled': True,
+    'symbols': ['BTCUSDT'],  # 用于对比测试的交易对
+    'accounts': ['account_deepseek', 'account_qwen']
+}
