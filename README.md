@@ -64,7 +64,7 @@ python3 nof1.py --view               # 查看交易决策和持仓
 ```
 nof1/
 ├── 🔧 核心模块          # 交易系统和数据处理
-├── 📚 docs/            # 完整文档
+├── 📚 docs/            # 精简文档（7个核心文档）
 ├── 🛠️ scripts/         # 工具脚本
 ├── 🧪 tests/           # 测试套件
 ├── 🌐 web/             # 前端监控面板
@@ -86,10 +86,9 @@ nof1/
 ## 📖 文档导航
 
 ### 用户指南
-- [快速开始](docs/user/QUICKSTART.md)
-- [Testnet快速指南](docs/user/QUICKSTART_TESTNET.md)
-- [数据库使用指南](docs/user/DATABASE_GUIDE.md)
-- [抗断连启动指南](docs/user/ROBUST_STARTUP.md)
+- [抗断连启动指南](docs/user/ROBUST_STARTUP.md) - 启动脚本和Testnet配置
+- [数据库使用指南](docs/user/DATABASE_GUIDE.md) - 数据库工具和查询
+- [安装指南](docs/user/INSTALL.md) - 依赖安装和配置
 
 ### 监控工具
 - [监控脚本使用指南](scripts/README_MONITORING.md)
@@ -98,12 +97,13 @@ nof1/
 
 ### 开发者
 - [CLAUDE.md - AI开发指南](CLAUDE.md) (📌 位于根目录)
-- [API文档](docs/user/API_DOCUMENTATION.md)
-- [测试指南](docs/dev/DEVELOPMENT.md)
+- [开发指南](docs/dev/DEVELOPMENT.md) - API文档、开发规范、测试指南
+- [多账户架构](docs/dev/MULTI_ACCOUNT_ARCHITECTURE.md) - 核心架构设计
+- [重构总结](docs/dev/REFACTOR_SUMMARY.md) - 重构成果和经验
 
 ### 项目
 - [项目结构](PROJECT_STRUCTURE.md)
-- [Demo Trading升级报告](docs/project/DEMO_TRADING_UPGRADE_REPORT.md)
+- [项目总结报告](docs/project/PROJECT_FINAL_REPORT.md)
 
 ## 🔧 常用命令
 

@@ -299,4 +299,58 @@ rm logs/*.log
 
 ---
 
+## 🔐 Testnet 配置（重要）
+
+### 获取 Testnet API Key
+
+```bash
+# 1. 访问 Testnet 官网
+https://testnet.binance.vision/
+
+# 2. 点击 "Login" 并使用 GitHub 登录
+# 3. 复制显示的 "API Key" 和 "Secret Key"
+```
+
+### 环境变量配置
+
+```bash
+# 方式1：直接设置（临时）
+export TESTNET_API_KEY="your_api_key_here"
+export TESTNET_SECRET_KEY="your_secret_key_here"
+export USE_TESTNET="true"
+
+# 方式2：创建 .env 文件（推荐）
+cat > /home/claude_user/nof1/.env << 'EOF'
+TESTNET_API_KEY=your_api_key_here
+TESTNET_SECRET_KEY=your_secret_key_here
+USE_TESTNET=true
+EOF
+```
+
+### 验证配置
+
+```bash
+# 测试连接
+python3 testnet_demo.py
+
+# 查看余额
+python3 nof1.py --view
+```
+
+---
+
+## 📊 性能对比模式
+
+### 多账户演示
+
+```bash
+# 运行多账户演示（每个账户使用不同LLM）
+python3 run_multi_account.py
+
+# 查看结果
+python3 nof1.py --view
+```
+
+---
+
 **💡 提示**：脚本会处理所有断连问题，让你安心运行系统！🚀

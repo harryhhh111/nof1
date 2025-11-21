@@ -420,6 +420,197 @@ summary = monitor.get_performance_summary(paper_trader)
 
 ---
 
+## 🌐 API 文档
+
+### 启动 API 服务器
+
+```bash
+# 启动 API 服务器
+python3 nof1.py --api
+
+# 或使用 start_nof1.sh
+./start_nof1.sh start-api
+```
+
+### 访问地址
+
+- **API 文档 (Swagger UI)**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+- **健康检查**: http://localhost:8000/api/v1/health
+
+### 主要 API 端点
+
+#### 1. 健康检查
+
+```bash
+GET /api/v1/health
+```
+
+**响应示例**:
+```json
+{
+  "status": "healthy",
+  "version": "1.0.0",
+  "timestamp": "2025-11-21T10:30:00Z"
+}
+```
+
+#### 2. 获取交易决策
+
+```bash
+GET /api/v1/decisions
+```
+
+**查询参数**:
+- `limit` (可选): 返回数量限制，默认 50
+- `symbol` (可选): 按交易对过滤
+
+#### 3. 获取性能指标
+
+```bash
+GET /api/v1/performance
+```
+
+**响应示例**:
+```json
+{
+  "total_trades": 120,
+  "win_rate": 65.5,
+  "total_pnl": 1250.75,
+  "total_pnl_pct": 12.5,
+  "sharpe_ratio": 1.85,
+  "max_drawdown": -5.2
+}
+```
+
+#### 4. 获取持仓信息
+
+```bash
+GET /api/v1/positions
+```
+
+**响应示例**:
+```json
+[
+  {
+    "symbol": "BTCUSDT",
+    "side": "long",
+    "size": 0.1,
+    "entry_price": 95000.0,
+    "current_price": 97500.0,
+    "unrealized_pnl": 250.0,
+    "stop_loss": 92000.0,
+    "take_profit": 100000.0
+  }
+]
+```
+
+#### 5. 获取市场数据
+
+```bash
+GET /api/v1/market/{symbol}
+```
+
+**响应示例**:
+```json
+{
+  "symbol": "BTCUSDT",
+  "current_price": 97500.0,
+  "timestamp": "2025-11-21T10:30:00Z",
+  "klines_3m": [...],
+  "klines_4h": [...],
+  "indicators": {...}
+}
+```
+
+#### 6. 手动执行交易
+
+```bash
+POST /api/v1/trade
+```
+
+**请求体**:
+```json
+{
+  "symbol": "BTCUSDT",
+  "side": "buy",
+  "type": "market",
+  "amount": 0.001,
+  "reason": "API测试交易"
+}
+```
+
+#### 7. 获取交易历史
+
+```bash
+GET /api/v1/trades
+```
+
+**查询参数**:
+- `limit` (可选): 返回数量限制
+- `offset` (可选): 跳过数量
+- `symbol` (可选): 按交易对过滤
+- `start_date` (可选): 开始日期 (YYYY-MM-DD)
+- `end_date` (可选): 结束日期 (YYYY-MM-DD)
+
+#### 8. 获取账户余额
+
+```bash
+GET /api/v1/balance
+```
+
+**响应示例**:
+```json
+{
+  "USDT": 9875.50,
+  "BTC": 0.125,
+  "ETH": 2.45,
+  "total_usd_value": 12500.75
+}
+```
+
+### 使用 Python 客户端
+
+```python
+import requests
+
+# 基本使用
+base_url = "http://localhost:8000"
+
+# 健康检查
+response = requests.get(f"{base_url}/api/v1/health")
+print(response.json())
+
+# 获取最新决策
+response = requests.get(f"{base_url}/api/v1/decisions?limit=10")
+decisions = response.json()
+
+# 获取性能指标
+response = requests.get(f"{base_url}/api/v1/performance")
+print(response.json())
+```
+
+### 使用 curl
+
+```bash
+# 健康检查
+curl http://localhost:8000/api/v1/health
+
+# 获取最新决策
+curl http://localhost:8000/api/v1/decisions
+
+# 获取性能指标
+curl http://localhost:8000/api/v1/performance
+
+# 获取持仓
+curl http://localhost:8000/api/v1/positions
+
+# 获取市场数据
+curl http://localhost:8000/api/v1/market/BTCUSDT
+```
+
+---
+
 ## 📚 参考资料
 
 - [FastAPI文档](https://fastapi.tiangolo.com/)
