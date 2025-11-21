@@ -5,6 +5,7 @@
 - TestnetTrading
 - DemoTrading
 - PaperTrading
+- HyperliquidTrading
 """
 
 import logging
@@ -13,6 +14,7 @@ from trading.base import TradingInterface
 from trading.testnet_trader import TestnetTrader
 from trading.demo_trader import DemoTrader
 from trading.paper_trader_impl import PaperTraderImpl
+from trading.hyperliquid_trader import HyperliquidTrader
 import config
 
 logger = logging.getLogger(__name__)
@@ -31,7 +33,7 @@ class TradingFactory:
         创建交易器实例
 
         Args:
-            mode: 交易模式 ('testnet', 'demo', 'paper')
+            mode: 交易模式 ('testnet', 'demo', 'paper', 'hyperliquid')
                    如果为 None，则根据 config.CURRENT_MODE 自动选择
 
         Returns:
@@ -53,6 +55,18 @@ class TradingFactory:
             return DemoTrader()
         elif mode == 'paper':
             return PaperTraderImpl()
+        elif mode == 'hyperliquid':
+            logger.info("🔥 使用Hyperliquid交易器 - Agent Wallet安全模式")
+            logger.warning("⚠️  Hyperliquid交易 - 真实资金风险！")
+            try:
+                return HyperliquidTrader(
+                    use_testnet=config.HYPERLIQUID_USE_TESTNET,
+                    agent_private_key=config.HYPERLIQUID_PRIVATE_KEY,
+                    main_wallet_address=config.HYPERLIQUID_WALLET_ADDRESS
+                )
+            except Exception as e:
+                logger.error(f"创建Hyperliquid交易器失败: {e}")
+                raise ValueError(f"Hyperliquid配置错误: {e}")
         elif mode == 'live':
             # 注意：实盘交易需要特别小心
             logger.warning("⚠️  使用实盘交易模式 - 真实资金风险！")
@@ -60,7 +74,7 @@ class TradingFactory:
             return TestnetTrader(use_live=True)
         else:
             raise ValueError(
-                f"不支持的交易模式: {mode}。支持的模式: testnet, demo, paper, live"
+                f"不支持的交易模式: {mode}。支持的模式: testnet, demo, paper, hyperliquid, live"
             )
 
     @staticmethod
@@ -71,7 +85,7 @@ class TradingFactory:
         Returns:
             可用模式列表
         """
-        return ['testnet', 'demo', 'paper', 'live']
+        return ['testnet', 'demo', 'paper', 'hyperliquid', 'live']
 
     @staticmethod
     def is_test_mode(mode: str) -> bool:

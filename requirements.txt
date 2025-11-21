@@ -8,3 +8,12 @@ fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
 pydantic>=2.0.0
 
+# Hyperliquid dependencies
+hyperliquid-python-sdk>=0.21.0
+websocket-client>=1.5.1
+eth-account>=0.10.0,<0.14.0
+eth-utils>=2.1.0,<6.0.0
+hexbytes>=1.2.0
+msgpack>=1.0.5,<2.0.0
+pycryptodome>=3.6.6
+

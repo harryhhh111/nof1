@@ -134,12 +134,30 @@ FUTURES_CONFIG = {
     }
 }
 
+# ===== Hyperliquid 配置 =====
+# Hyperliquid API配置（Agent Wallet安全模式）
+HYPERLIQUID_PRIVATE_KEY = os.getenv("HYPERLIQUID_PRIVATE_KEY", "")
+HYPERLIQUID_WALLET_ADDRESS = os.getenv("HYPERLIQUID_WALLET_ADDRESS", "")
+HYPERLIQUID_USE_TESTNET = os.getenv("HYPERLIQUID_USE_TESTNET", "false").lower() == "true"
+
+# 验证Hyperliquid配置
+if HYPERLIQUID_PRIVATE_KEY:
+    print("✅ Hyperliquid Agent Wallet Private Key 已配置")
+else:
+    print("⚠️  Hyperliquid Agent Wallet Private Key 未配置")
+
+if HYPERLIQUID_WALLET_ADDRESS:
+    print("✅ Hyperliquid Main Wallet Address 已配置")
+else:
+    print("⚠️  Hyperliquid Main Wallet Address 未配置")
+
 # 交易模式
 TRADING_MODE = {
-    'PAPER': 'paper',       # 纸交易
-    'TESTNET': 'testnet',   # Testnet模拟交易（Legacy）
-    'DEMO': 'demo',         # Demo Trading（新系统）
-    'LIVE': 'live'          # 实盘交易（高风险！）
+    'PAPER': 'paper',         # 纸交易
+    'TESTNET': 'testnet',     # Testnet模拟交易（Legacy）
+    'DEMO': 'demo',           # Demo Trading（新系统）
+    'HYPERLIQUID': 'hyperliquid',  # Hyperliquid交易
+    'LIVE': 'live'            # 实盘交易（高风险！）
 }
 
 # 当前交易模式（根据USE_TESTNET和API Key自动选择）
